@@ -193,6 +193,10 @@ button.add[aria-pressed="true"]{background:#171717;color:#fff;border-color:#1717
       </details>
 
       <div class="mt-4 overflow-x-auto rounded-lg border border-neutral-200">
+        <div class="flex flex-wrap items-center gap-3 border-b border-neutral-200 bg-neutral-50 px-4 py-3">
+          <p class="text-[14px] font-semibold text-neutral-900">All eligible seats</p>
+          <input id="q2" type="search" placeholder="Search: warangal cse, kerala ece, iit civil…" class="ml-auto h-10 w-full rounded-md border border-neutral-200 bg-white px-3.5 text-[14px] md:w-80">
+        </div>
         <table class="w-full min-w-[640px] text-left">
           <thead>
             <tr class="border-b border-neutral-100 bg-neutral-50">
@@ -546,7 +550,7 @@ $("advRound").addEventListener("change", adviseRound);
 $("advSeat").addEventListener("change", adviseRound);
 
 $("more").addEventListener("click", () => { page++; draw(); });
-$("q").addEventListener("input", () => { page = 1; if (RESULT) draw(); });
+for (const [a, b] of [["q", "q2"], ["q2", "q"]]) $(a).addEventListener("input", () => { $(b).value = $(a).value; page = 1; if (RESULT) draw(); });
 document.querySelectorAll("#filters .chip").forEach(b => b.addEventListener("click", () => {
   const on = b.getAttribute("aria-pressed") !== "true";
   b.setAttribute("aria-pressed", on);
