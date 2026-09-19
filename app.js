@@ -157,17 +157,25 @@ function tick(){
 tick(); setInterval(tick,30000);
 
 /* ── waitlist ────────────────────────────────── */
-// Static site: there is no backend yet, so the form only confirms.  Wire
-// WAITLIST_ENDPOINT to a Formspree / Google Form / worker URL to collect
-// addresses for real.
-const WAITLIST_ENDPOINT = "";
+// Addresses go to a Google Form (Responses tab / linked sheet).  Google does
+// not allow the response to be read cross-origin, so the request is sent
+// no-cors and the page assumes it landed.
+const WAITLIST = {
+  action: "https://docs.google.com/forms/d/e/1FAIpQLSctecQDQsz7IHUEXrMXOt_GNsgAMvuWv9AA4SEgBYSwm-Ofjw/formResponse",
+  email: "entry.737565681",
+};
 document.getElementById("nl").addEventListener("submit", async e=>{
   e.preventDefault();
-  const form = e.target;
-  if (WAITLIST_ENDPOINT) {
-    try { await fetch(WAITLIST_ENDPOINT, { method:"POST", body:new FormData(form), headers:{Accept:"application/json"} }); }
-    catch (_) {}
+  const form = e.target, button = form.querySelector("button");
+  const body = new URLSearchParams({ [WAITLIST.email]: form.email.value });
+  button.disabled = true;
+  try {
+    await fetch(WAITLIST.action, { method:"POST", mode:"no-cors", body,
+      headers:{ "Content-Type":"application/x-www-form-urlencoded" } });
+    form.reset();
+    document.getElementById("nlMsg").hidden=false;
+  } catch (_) {
+    alert("Couldn't reach the sign-up form — please try again.");
   }
-  form.reset();
-  document.getElementById("nlMsg").hidden=false;
+  button.disabled = false;
 });
