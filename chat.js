@@ -117,20 +117,24 @@ const MAX_TURNS = 12;
     const ctx = { site: "jeeneetrank.com JoSAA predictor", season: data && data.season };
     if (!data || !result) return ctx;
     const { elig, sim } = result;
+    // Compact rows: the Worker caps the context, and every byte is paid for.
     const seatRow = i => {
       const s = data.seats[elig[i].s], inst = data.institutes[s[0]];
-      return { id: elig[i].s, institute: inst.short, type: inst.type, state: inst.state, program: data.programs[s[1]].replace(/\s*\(.*?\)\s*$/, ""),
-        quota: data.quotas[s[2]], category: data.categories[s[3]], female_only: data.genders[s[4]].startsWith("Female"),
-        closing_last_season: s[5], closing_two_seasons_ago: s[7], your_rank: elig[i].rank, chance: Math.round(sim.p[i] * 100) / 100 };
+      const row = { id: elig[i].s, seat: `${inst.short} · ${data.programs[s[1]].replace(/\s*\(.*?\)\s*$/, "")}`,
+        quota: `${data.quotas[s[2]]} ${data.categories[s[3]]}`, closing: s[5], chance: Math.round(sim.p[i] * 100) / 100 };
+      if (data.genders[s[4]].startsWith("Female")) row.female_only = true;
+      return row;
     };
-    ctx.candidate = page.candidate();
+    const c = page.candidate();
+    ctx.candidate = { category: c.category, gender: c.gender === "F" ? "female" : "male/other", pwd: c.pwd, home_state: c.state, jee_main_crl: c.mainRank.crl, jee_main_category_rank: c.mainRank.cat, jee_advanced: c.advRank };
+    ctx.note = "chance = share of 2000 simulated seasons in which the seat's final-round closing rank reaches the candidate's rank; closing = last season's final-round closing rank; quota = AI all-India / HS home-state / OS other-state + seat category";
     ctx.eligible_seats_total = elig.length;
     // What the student is looking at: the filtered view, top of it.
     const view = page.visible();
     ctx.seats_in_current_view = view.length;
-    ctx.top_seats_in_view = view.slice(0, 45).map(seatRow);
+    ctx.top_seats_in_view = view.slice(0, 30).map(seatRow);
     // Plus the borderline ones, which is where advice matters.
-    const likely = [...elig.keys()].filter(i => sim.p[i] >= 0.2 && sim.p[i] <= 0.85).sort((a, b) => data.seats[elig[a].s][5] - data.seats[elig[b].s][5]).slice(0, 30);
+    const likely = [...elig.keys()].filter(i => sim.p[i] >= 0.2 && sim.p[i] <= 0.85).sort((a, b) => data.seats[elig[a].s][5] - data.seats[elig[b].s][5]).slice(0, 25);
     ctx.borderline_seats = likely.map(seatRow);
     const list = page.list();
     ctx.choice_list = list.entries.map((e, k) => ({ position: k + 1, ...(e.i >= 0 ? seatRow(e.i) : { id: e.s, note: "not eligible with current inputs" }), chance_you_land_here: Math.round(e.perPos * 100) / 100 }));
