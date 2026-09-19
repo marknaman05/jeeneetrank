@@ -90,6 +90,11 @@ button.add[aria-pressed="true"]{background:#171717;color:#fff;border-color:#1717
       </div>
       <div id="filters" class="space-y-3 border-t border-neutral-100 pt-4" title="Click to toggle; everything is on by default">
         <div>
+          <label class="mb-1.5 block text-[12px] font-medium text-neutral-900" for="q">Search</label>
+          <input id="q" type="search" placeholder="college, branch, city… e.g. warangal cse" class="h-10 w-full rounded-md border border-neutral-200 px-3.5 text-[13px]">
+          <p class="mt-1 text-[11px] text-neutral-500">Matches institute, programme and state; several words narrow it down.</p>
+        </div>
+        <div>
           <p class="mb-1.5 text-[12px] font-medium text-neutral-900">Institutes</p>
           <div class="flex flex-wrap gap-1.5" id="typeChips">
             <button type="button" class="chip" data-type="IIT" aria-pressed="true">IIT</button>
@@ -125,8 +130,6 @@ button.add[aria-pressed="true"]{background:#171717;color:#fff;border-color:#1717
 
     <!-- ── results ── -->
     <section id="out" hidden>
-      <input id="q" type="search" placeholder="Filter: computer, warangal, vlsi…" class="h-9 w-full rounded-md border border-neutral-200 px-3 text-[13px]">
-
       <div class="mt-4 grid gap-px overflow-hidden rounded-lg border border-neutral-200 bg-neutral-200 sm:grid-cols-3">
         <div class="bg-white p-4"><p class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">Eligible seats</p><p id="nElig" class="mt-1 font-serif text-[28px] leading-none">—</p></div>
         <div class="bg-white p-4"><p class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">Safe (≥ 70%)</p><p id="nSafe" class="mt-1 font-serif text-[28px] leading-none">—</p></div>
@@ -249,6 +252,23 @@ const BRANCHES = [
   ["Chem / Bio / Materials", /chemical|polymer|petroleum|ceramic|metallurg|material|mineral|mining|food|dairy|agricultur|textile|carpet|handloom|fashion|biotech|\bbio/i],
 ];
 const OTHER = "Other";
+// So "cse", "ece", "eee", "mech", "civil", "it", "aiml" find what students mean.
+const ABBR = p => {
+  const out = [];
+  if (/computer science/i.test(p)) out.push("cse", "cs");
+  if (/electronics and communication/i.test(p)) out.push("ece");
+  if (/electrical and electronics/i.test(p)) out.push("eee");
+  if (/^electrical/i.test(p)) out.push("ee");
+  if (/mechanical/i.test(p)) out.push("mech", "me");
+  if (/^information technology/i.test(p)) out.push("it");
+  if (/artificial intelligence|machine learning/i.test(p)) out.push("ai", "ml", "aiml");
+  if (/data science/i.test(p)) out.push("ds", "aids");
+  if (/mathematics (and|&) computing/i.test(p)) out.push("mnc", "mac");
+  if (/chemical/i.test(p)) out.push("chem");
+  if (/architecture/i.test(p)) out.push("barch", "arch");
+  if (/dual degree/i.test(p)) out.push("dual");
+  return out.join(" ");
+};
 const branchOf = program => { for (const [name, re] of BRANCHES) if (re.test(program)) return name; return OTHER; };
 const branches = new Set([...BRANCHES.map(b => b[0]), OTHER]);
 $("branchChips").innerHTML = [...branches].map(b => `<button type="button" class="chip" data-branch="${b}" aria-pressed="true">${b}</button>`).join("");
@@ -319,7 +339,7 @@ function visible() {
     const seat = DATA.seats[RESULT.elig[i].s], inst = DATA.institutes[seat[0]];
     if (!types.has(inst.type) || !tiers.has(tierOf(RESULT.sim.p[i])) || !branches.has(BRANCH_OF[seat[1]])) return false;
     if (!q.length) return true;
-    const hay = (inst.short + " " + inst.name + " " + DATA.programs[seat[1]]).toLowerCase();
+    const hay = (inst.short + " " + inst.name + " " + inst.state + " " + inst.type + " " + DATA.programs[seat[1]] + " " + ABBR(DATA.programs[seat[1]])).toLowerCase();
     return q.every(w => hay.includes(w));
   });
 }
