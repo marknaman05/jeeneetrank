@@ -2,7 +2,7 @@
 
 Landing page for jeeneetrank — a JEE / NEET counselling simulator.
 
-Static site: `index.html` + `app.js`, Tailwind via CDN. No build step.
+Static site: `index.html`, `predict.html`, `app.js`, `predict.js`. Tailwind v4 is built to `styles.css` (committed): `npm install && npm run css` after changing classes (`npm run css:watch` while editing).
 
 Deployed with GitHub Pages at https://jeeneetrank.com (custom domain via `CNAME`).
 

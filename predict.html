@@ -10,14 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config = { theme: { extend: {
-  fontFamily: { serif:['"Instrument Serif"','ui-serif','Georgia','serif'], sans:['Geist','ui-sans-serif','system-ui','sans-serif'], mono:['"Geist Mono"','ui-monospace','Menlo','monospace'] },
-  borderRadius: { sm:'6px', md:'8px', lg:'16px' }, maxWidth: { content:'1140px' },
-  transitionTimingFunction: { smooth:'cubic-bezier(0.22,1,0.36,1)' },
-}}}
-</script>
+<link rel="stylesheet" href="styles.css">
 <style>
 :root{color-scheme:light}
 body{margin:0;background:#fff;color:#171717;font-family:Geist,ui-sans-serif,system-ui,sans-serif;letter-spacing:-0.025em;-webkit-font-smoothing:antialiased}
@@ -138,6 +131,7 @@ button.add[aria-pressed="true"]{background:#171717;color:#fff;border-color:#1717
           </div>
           <div class="flex items-center gap-4">
             <div class="text-right"><p class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">Any seat from list</p><p id="listAny" class="font-serif text-[26px] leading-none text-neutral-900">—</p></div>
+            <button id="listCopy" type="button" class="text-[12px] text-neutral-700 underline-offset-2 hover:underline">Copy as text</button>
             <button id="listClear" type="button" class="text-[12px] text-neutral-500 underline-offset-2 hover:underline">Clear</button>
           </div>
         </div>
@@ -402,6 +396,17 @@ $("listRows").addEventListener("click", e => {
   const moved = DATA.seats[LIST[j]], other = DATA.seats[LIST[k]];
   const pc = x => Math.round(x * 100) + "%";
   toast(`${DATA.institutes[moved[0]].short} → #${j + 1}: ${pc(before[k])} → ${pc(after[j])}. ${DATA.institutes[other[0]].short}: ${pc(before[j])} → ${pc(after[k])}.`);
+});
+$("listCopy").addEventListener("click", async () => {
+  if (!LIST.length) return;
+  const { perPos, any } = scoreList(listOrder());
+  const lines = LIST.map((s, k) => {
+    const seat = DATA.seats[s];
+    return `${k + 1}. ${DATA.institutes[seat[0]].name} — ${DATA.programs[seat[1]]} [${DATA.quotas[seat[2]]} · ${DATA.categories[seat[3]]} · ${DATA.genders[seat[4]]}] closing ${seat[5]} · ${Math.round(perPos[k] * 100)}% at this position`;
+  });
+  const text = `My JoSAA choice list (jeeneetrank.com, ${DATA.season} data, rank ${fmt(RESULT.c.mainRank.crl)})\nChance of any seat from this list: ${Math.round(any * 100)}%\n\n${lines.join("\n")}\n`;
+  try { await navigator.clipboard.writeText(text); toast("Copied — paste it anywhere."); }
+  catch (_) { prompt("Copy your list:", text); }
 });
 $("listClear").addEventListener("click", () => { LIST.forEach(s => document.querySelectorAll(`button.add[data-add="${s}"]`).forEach(b => { b.setAttribute("aria-pressed", false); b.textContent = "+"; })); LIST = []; saveList(); drawList(); });
 

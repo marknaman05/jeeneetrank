@@ -1,0 +1,22 @@
+{
+  "name": "jeeneetrank",
+  "version": "1.0.0",
+  "description": "jeeneetrank.com \u2014 static site",
+  "scripts": {
+    "css": "tailwindcss -i tailwind.css -o styles.css --minify",
+    "css:watch": "tailwindcss -i tailwind.css -o styles.css --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marknaman05/jeeneetrank.git"
+  },
+  "bugs": {
+    "url": "https://github.com/marknaman05/jeeneetrank/issues"
+  },
+  "homepage": "https://github.com/marknaman05/jeeneetrank#readme",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "tailwindcss": "^4.3.3"
+  },
+  "private": true
+}

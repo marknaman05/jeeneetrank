@@ -1,0 +1,17 @@
+/* Source for styles.css.  Build: npm run css  (npm run css:watch while editing). */
+@import "tailwindcss";
+
+@source "./index.html";
+@source "./predict.html";
+@source "./app.js";
+
+@theme {
+  --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
+  --font-sans: Geist, ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --container-content: 1140px;
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+}
