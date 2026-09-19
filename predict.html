@@ -255,8 +255,8 @@ function run() {
   const c = candidate();
   const elig = JNR.eligible(DATA, c);
   const sim = JNR.simulate(DATA, elig);
-  // Most competitive first: that is how students read a college list.
-  RESULT = { c, elig, sim, order: [...elig.keys()].filter(i => sim.p[i] >= 0.01).sort((a, b) => DATA.seats[elig[a].s][5] - DATA.seats[elig[b].s][5]) };
+  // Highest chance first; among equals, the more competitive seat first.
+  RESULT = { c, elig, sim, order: [...elig.keys()].filter(i => sim.p[i] >= 0.01).sort((a, b) => sim.p[b] - sim.p[a] || DATA.seats[elig[a].s][5] - DATA.seats[elig[b].s][5]) };
   page = 1;
   $("empty").hidden = true; $("out").hidden = false;
   draw(); drawList();
@@ -301,7 +301,7 @@ function draw() {
       </td>
       <td class="px-2 py-3 text-right"><button type="button" data-add="${elig[i].s}" aria-pressed="${LIST.includes(elig[i].s)}" title="add to my choice list" class="add h-7 w-7 rounded-md border border-neutral-200 font-mono text-[13px] text-neutral-600 transition-colors hover:border-neutral-900 hover:text-neutral-900 aria-pressed:bg-neutral-900">${LIST.includes(elig[i].s) ? "✓" : "+"}</button></td></tr>`;
   }).join("") || `<tr><td colspan="5" class="px-4 py-8 text-center text-[14px] text-neutral-500">No eligible seats match. Check the rank, the home state, and whether IITs need an Advanced rank.</td></tr>`;
-  $("shown").textContent = `showing ${fmt(shown.length)} of ${fmt(vis.length)} · most competitive first · seats under 1% hidden`;
+  $("shown").textContent = `showing ${fmt(shown.length)} of ${fmt(vis.length)} · highest chance first · seats under 1% hidden`;
   $("more").hidden = shown.length >= vis.length;
 }
 
