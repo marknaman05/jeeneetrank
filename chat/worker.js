@@ -1,4 +1,4 @@
-/* jeeneetrank chat — a thin, rate-limited proxy in front of the Claude API.
+/* jeeneetrank chat — a thin, rate-limited proxy in front of OpenRouter (DeepSeek).
  *
  * POST /chat  { messages: [{role, content}], context: {...} }
  *   -> text/event-stream of `data: {"t": "..."}` chunks, then `data: [DONE]`.
@@ -6,7 +6,7 @@
  * The browser sends the page's current state as `context` (the candidate's
  * inputs, the top seats with probabilities, the choice list); the system
  * prompt is built here so the site cannot be talked into a different role.
- * The API key never leaves this Worker.
+ * The OpenRouter key never leaves this Worker.
  */
 
 const MAX_MESSAGES = 12;
@@ -42,19 +42,23 @@ export default {
     if (!messages.length) return json({ error: "no message" }, 400, cors);
     const context = JSON.stringify(body.context || {}).slice(0, MAX_CONTEXT_CHARS);
 
-    const upstream = await fetch("https://api.anthropic.com/v1/messages", {
+    // OpenRouter speaks the OpenAI chat format; the system prompt goes in as
+    // the first message.  Referer/Title are what OpenRouter uses to label
+    // the traffic in its dashboard.
+    const upstream = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "x-api-key": env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
+        "authorization": `Bearer ${env.OPENROUTER_API_KEY}`,
+        "HTTP-Referer": "https://jeeneetrank.com",
+        "X-Title": "jeeneetrank",
       },
       body: JSON.stringify({
-        model: env.MODEL || "claude-sonnet-5",
+        model: env.MODEL || "deepseek/deepseek-v4.1-flash",
         max_tokens: MAX_TOKENS,
+        temperature: 0.4,
         stream: true,
-        system: system(context),
-        messages,
+        messages: [{ role: "system", content: system(context) }, ...messages],
       }),
     });
     if (!upstream.ok) {
@@ -77,12 +81,12 @@ export default {
           while ((nl = buf.indexOf("\n")) >= 0) {
             const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1);
             if (!line.startsWith("data:")) continue;
-            let ev; try { ev = JSON.parse(line.slice(5)); } catch { continue; }
-            if (ev.type === "content_block_delta" && ev.delta?.type === "text_delta") {
-              await writer.write(enc.encode(`data: ${JSON.stringify({ t: ev.delta.text })}\n\n`));
-            } else if (ev.type === "error") {
-              await writer.write(enc.encode(`data: ${JSON.stringify({ error: ev.error?.message || "error" })}\n\n`));
-            }
+            const payload = line.slice(5).trim();
+            if (payload === "[DONE]") continue;
+            let ev; try { ev = JSON.parse(payload); } catch { continue; }
+            const text = ev.choices?.[0]?.delta?.content;
+            if (text) await writer.write(enc.encode(`data: ${JSON.stringify({ t: text })}\n\n`));
+            else if (ev.error) await writer.write(enc.encode(`data: ${JSON.stringify({ error: ev.error.message || "error" })}\n\n`));
           }
         }
       } finally {

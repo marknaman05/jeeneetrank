@@ -1,12 +1,13 @@
 # Cloudflare Worker behind the site's chat.  Deploy:
-#   cd chat && npx wrangler login && npx wrangler secret put ANTHROPIC_API_KEY && npx wrangler deploy
+#   cd chat && npx wrangler login && npx wrangler secret put OPENROUTER_API_KEY && npx wrangler deploy
 # Then put the printed URL into CHAT_ENDPOINT in ../chat.js.
 name = "jeeneetrank-chat"
 main = "worker.js"
 compatibility_date = "2025-09-01"
 
 [vars]
-MODEL = "claude-sonnet-5"
+# Any OpenRouter model id.  DeepSeek is cheap and good at this kind of Q&A.
+MODEL = "deepseek/deepseek-v4.1-flash"
 ALLOWED_ORIGINS = "https://jeeneetrank.com,https://www.jeeneetrank.com,http://localhost:8765,http://localhost:8080"
 
 # 20 messages a minute per IP; enough for a conversation, not for a scraper.

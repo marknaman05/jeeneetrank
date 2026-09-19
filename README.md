@@ -29,4 +29,4 @@ The choice-list builder scores an ordered list by the first seat that admits in 
 
 ## Chat assistant (`chat.js` + `chat/`)
 
-A floating assistant on the predictor. Each message carries the page state (inputs, top seats with probabilities, borderline seats, the choice list with per-position odds, round-advisor state) to a Cloudflare Worker in `chat/`, which holds the Claude API key, streams the reply and rate-limits per IP. Replies can end with `SUGGEST: id,…`, rendered as one-click add-to-list chips. Deploy steps in `chat/README.md`; set `CHAT_ENDPOINT` in `chat.js`.
+A floating assistant on the predictor. Each message carries the page state (inputs, top seats with probabilities, borderline seats, the choice list with per-position odds, round-advisor state) to a Cloudflare Worker in `chat/`, which holds the OpenRouter key (DeepSeek model), streams the reply and rate-limits per IP. Replies can end with `SUGGEST: id,…`, rendered as one-click add-to-list chips. Deploy steps in `chat/README.md`; set `CHAT_ENDPOINT` in `chat.js`.

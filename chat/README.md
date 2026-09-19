@@ -1,11 +1,11 @@
 # jeeneetrank chat worker
 
-A Cloudflare Worker that proxies the site's chat to the Claude API, streams the reply, and rate-limits per IP. The API key lives only here.
+A Cloudflare Worker that proxies the site's chat to OpenRouter (DeepSeek by default), streams the reply, and rate-limits per IP. The API key lives only here.
 
 ```
 cd chat
 npx wrangler login                          # once; opens the browser
-npx wrangler secret put ANTHROPIC_API_KEY   # paste the key
+npx wrangler secret put OPENROUTER_API_KEY  # paste the key from openrouter.ai/keys
 npx wrangler deploy                         # prints https://jeeneetrank-chat.<you>.workers.dev
 ```
 
