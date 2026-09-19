@@ -129,7 +129,7 @@ button.add[aria-pressed="true"]{background:#171717;color:#fff;border-color:#1717
     </form>
 
     <!-- ── results ── -->
-    <section id="out" hidden>
+    <section id="out" class="min-w-0" hidden>
       <div class="mt-4 grid gap-px overflow-hidden rounded-lg border border-neutral-200 bg-neutral-200 sm:grid-cols-3">
         <div class="bg-white p-4"><p class="font-mono text-[12px] uppercase tracking-[0.1em] text-neutral-500">Eligible seats</p><p id="nElig" class="mt-1 font-serif text-[36px] leading-none">—</p></div>
         <div class="bg-white p-4"><p class="font-mono text-[12px] uppercase tracking-[0.1em] text-neutral-500">Safe (≥ 70%)</p><p id="nSafe" class="mt-1 font-serif text-[36px] leading-none">—</p></div>
@@ -143,17 +143,16 @@ button.add[aria-pressed="true"]{background:#171717;color:#fff;border-color:#1717
             <div>
               <p class="font-mono text-[12px] uppercase tracking-[0.14em] text-neutral-400">Choice list simulator</p>
               <p class="mt-1 font-serif text-[32px] leading-none">My choice list <span id="listCount" class="font-sans text-[15px] text-neutral-400"></span></p>
-              <p class="mt-3 max-w-xl text-[15px] leading-relaxed text-neutral-300">Allotment goes to the <b class="text-white">first</b> choice that admits you, so list them in your true order. <span id="listLikely" class="text-cyan-200"></span></p>
+              <p class="mt-3 max-w-xl text-[15px] leading-relaxed text-neutral-300">Allotment goes to the <b class="text-white">first</b> choice that admits you, so list them in your true order of preference.</p>
             </div>
-            <div class="flex items-center gap-4">
-              <svg viewBox="0 0 44 44" class="h-20 w-20 -rotate-90">
-                <circle cx="22" cy="22" r="18" fill="none" stroke="#404040" stroke-width="4"/>
-                <circle id="listRing" cx="22" cy="22" r="18" fill="none" stroke="#a5f3fc" stroke-width="4" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="113" style="transition:stroke-dashoffset .6s cubic-bezier(0.22,1,0.36,1)"/>
-              </svg>
-              <div>
-                <p class="font-mono text-[12px] uppercase tracking-[0.1em] text-neutral-400">Any seat from list</p>
-                <p id="listAny" class="font-serif text-[48px] leading-none">—</p>
-              </div>
+            <div class="w-full max-w-md rounded-lg border border-cyan-200/40 bg-cyan-100/10 px-5 py-4">
+              <p class="font-mono text-[12px] uppercase tracking-[0.1em] text-cyan-200">Most likely you land at</p>
+              <p id="likelyName" class="mt-1 font-serif text-[30px] leading-[1.05] text-white">—</p>
+              <p id="likelyProg" class="mt-1 truncate text-[14px] text-neutral-300"></p>
+              <p class="mt-3 flex flex-wrap items-baseline gap-x-4 gap-y-1 font-mono text-[12px] text-neutral-400">
+                <span><span id="likelyPct" class="text-[16px] text-white">—</span> of simulated seasons</span>
+                <span>any seat from list <span id="listAny" class="text-[16px] text-white">—</span></span>
+              </p>
             </div>
           </div>
           <!-- where you land: one stacked bar, a segment per choice, grey for "no seat" -->
@@ -436,10 +435,17 @@ function drawList() {
   const n = LIST.length;
   $("listCount").textContent = n ? `· ${n} choice${n > 1 ? "s" : ""}` : "";
   $("listAny").textContent = n ? Math.round(any * 100) + "%" : "—";
-  $("listRing").setAttribute("stroke-dashoffset", (113 - 113 * (n ? any : 0)).toFixed(1));
   let best = -1; perPos.forEach((p, k) => { if (best < 0 || p > perPos[best]) best = k; });
-  $("listLikely").textContent = n && perPos[best] > 0
-    ? `Most likely: #${best + 1} ${DATA.institutes[DATA.seats[LIST[best]][0]].short} (${Math.round(perPos[best] * 100)}%).` : "";
+  if (n && perPos[best] > 0) {
+    const seat = DATA.seats[LIST[best]];
+    $("likelyName").textContent = `#${best + 1} ${DATA.institutes[seat[0]].short}`;
+    $("likelyProg").textContent = DATA.programs[seat[1]].replace(/\s*\(.*?\)\s*$/, "");
+    $("likelyPct").textContent = Math.round(perPos[best] * 100) + "%";
+  } else {
+    $("likelyName").textContent = n ? "No seat" : "—";
+    $("likelyProg").textContent = n ? "none of these admits you in most seasons — add safer seats" : "";
+    $("likelyPct").textContent = "—";
+  }
   $("listEmpty").hidden = n > 0;
   $("listFoot").hidden = n === 0;
   $("landBar").hidden = $("landKey").hidden = n === 0;
