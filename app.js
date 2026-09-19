@@ -5,8 +5,8 @@ document.getElementById("heroState").innerHTML =
 
 /* ── swap impact ─────────────────────────────── */
 const SWAP={
-  before:[{n:"1. CSE, NIT Warangal",p:6},{n:"2. ECE, NIT Warangal",p:38},{n:"3. CSE, NIT Trichy",p:9},{n:"4. Mech, NIT Surathkal",p:41}],
-  after: [{n:"1. CSE, NIT Warangal",p:6},{n:"2. CSE, NIT Trichy",p:9},{n:"3. ECE, NIT Warangal",p:35},{n:"4. Mech, NIT Surathkal",p:40}]
+  before:[{n:"1. CSE, NIT Warangal",p:6},{n:"2. ECE, NIT Warangal",p:31},{n:"3. CSE, NIT Trichy",p:4},{n:"4. Mech, NIT Surathkal",p:27}],
+  after: [{n:"1. CSE, NIT Warangal",p:6},{n:"2. CSE, NIT Trichy",p:9},{n:"3. ECE, NIT Warangal",p:26},{n:"4. Mech, NIT Surathkal",p:27}]
 };
 const bars=(list,el)=>el.innerHTML=list.map(r=>`
   <div><div class="flex items-baseline justify-between gap-3">
@@ -19,7 +19,7 @@ bars(SWAP.after,  document.getElementById("afterList"));
 
 /* ── testimonial carousel ────────────────────── */
 const T = [
-  { q:"I had ECE Warangal at #14. The simulator showed it was worth more at #6, and my odds of any NIT went up nine points. I'd never have worked that out on a spreadsheet.",
+  { q:"My list ended at #22 with a 61% chance of any seat and I had no idea. The simulator showed it; I added six safe options at the bottom and went into Round 1 at 96%. I'd never have worked that out on a spreadsheet.",
     n:"Aditya S.", r:"JEE Main · AIR 21,400 · Patna", a:"AS" },
   { q:"My EWS certificate was from the wrong financial year and nobody told me. jeeneetrank caught it eleven days before Round 2 reporting.",
     n:"Riya K.", r:"NEET UG · AIR 44,900 · Nagpur", a:"RK" },

@@ -113,7 +113,7 @@ details[open] .chev{transform:rotate(180deg)}
         Your rank is fixed.<br>Your <span class="annot">choice list</span> isn't.
       </h1>
       <p class="mx-auto mt-6 max-w-xl text-[16px] leading-relaxed text-neutral-700">
-        Two students with the same rank end up in very different colleges — because of how they ordered their preferences. Every other predictor hands you a list. We simulate the actual seat allotment on <em>your</em> order, and stay with you through every round until you're seated.
+        Two students with the same rank end up in very different colleges — because of what was on their list, and in what order. Every other predictor hands you a list. We simulate the actual seat allotment on <em>your</em> order, tell you where you'll most likely land, and stay with you through every round until you're seated.
       </p>
       <div class="mt-8 flex flex-col items-center gap-3 md:flex-row md:justify-center">
         <a href="#predictor" class="w-full rounded-sm bg-neutral-800 px-5 py-2.5 text-center text-[15px] text-white shadow-xl shadow-neutral-300/50 transition-colors duration-500 ease-smooth hover:bg-neutral-900 md:w-auto">Check your chances — free</a>
@@ -174,7 +174,7 @@ details[open] .chev{transform:rotate(180deg)}
       <article class="rounded-lg border border-neutral-100 p-4">
         <p class="mb-3 font-mono text-[10px] uppercase tracking-[0.12em] text-neutral-400">02</p>
         <h3 class="mb-2 text-[14px] font-semibold text-neutral-900">"High chance" is not a number</h3>
-        <p class="text-[15px] leading-relaxed text-neutral-700">A colour-coded chip is a threshold on a spreadsheet column. It can't tell you the odds at preference #12 — and certainly not what changes if you swap #12 and #13.</p>
+        <p class="text-[15px] leading-relaxed text-neutral-700">A colour-coded chip is a threshold on a spreadsheet column. It can't tell you the odds that #12 is where you actually end up — or whether your list runs out before it catches you.</p>
       </article>
       <article class="rounded-lg border border-neutral-100 p-4">
         <p class="mb-3 font-mono text-[10px] uppercase tracking-[0.12em] text-neutral-400">03</p>
@@ -191,7 +191,7 @@ details[open] .chev{transform:rotate(180deg)}
     <div>
       <p class="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-400">How it works</p>
       <h2 class="font-serif text-[clamp(1.9rem,4vw,2.8rem)] leading-[1.2] text-neutral-900">We run the allotment, not a spreadsheet</h2>
-      <p class="mt-4 max-w-xl text-[16px] leading-relaxed text-neutral-700">We execute the real seat-allocation algorithm against the real seat matrix, ten thousand times, across a distribution of how ranks move year to year. You get a probability at every position in your list — and you can watch it move as you reorder.</p>
+      <p class="mt-4 max-w-xl text-[16px] leading-relaxed text-neutral-700">We execute the real seat-allocation algorithm against the real seat matrix, ten thousand times, across a distribution of how ranks move year to year. You get, at every position in your list, the probability that it's the seat you're allotted — and whether the list has enough safety at the bottom.</p>
       <dl class="mt-7 grid grid-cols-3 gap-px overflow-hidden rounded-lg border border-neutral-200 bg-neutral-200">
         <div class="bg-white p-4"><dt class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">Seats modelled</dt><dd class="mt-1 font-serif text-[26px] leading-none text-neutral-900">61,400</dd></div>
         <div class="bg-white p-4"><dt class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">Years of data</dt><dd class="mt-1 font-serif text-[26px] leading-none text-neutral-900">2018–25</dd></div>
@@ -213,13 +213,14 @@ details[open] .chev{transform:rotate(180deg)}
 <span class="text-neutral-500">→</span> rank drift model .......... <span class="text-emerald-400">2018–2025</span>
 <span class="text-neutral-500">→</span> quota: home-state Bihar ... <span class="text-emerald-400">ok</span>
 
-  #01  CSE, NIT Warangal ......... <span class="text-rose-400">6%</span>
-  #02  ECE, NIT Warangal ........ <span class="text-amber-400">38%</span>
-  #03  CSE, NIT Trichy ........... <span class="text-rose-400">9%</span>
-  #04  Mech, NIT Surathkal ...... <span class="text-emerald-400">41%</span>
+  #01  CSE, NIT Warangal ......... <span class="text-rose-400">6%</span>   ← where you land
+  #02  ECE, NIT Warangal ........ <span class="text-amber-400">31%</span>
+  #03  CSE, NIT Trichy ........... <span class="text-rose-400">4%</span>
+  #04  Mech, NIT Surathkal ...... <span class="text-amber-400">27%</span>
 
-<span class="text-neutral-500">→</span> P(any seat) ............... <span class="text-emerald-400">88.3%</span>
-<span class="text-neutral-500">→</span> swap #02 ↔ #03 ............ <span class="text-rose-400">−4.1%</span>
+<span class="text-neutral-500">→</span> P(any seat) ............... <span class="text-amber-400">68.0%</span>
+<span class="text-neutral-500">→</span> most likely ............... <span class="text-emerald-400">#02 ECE Warangal</span>
+<span class="text-neutral-500">→</span> advice .................... <span class="text-rose-400">add 3 safe seats at the bottom</span>
 <span class="text-emerald-400">$</span> <span class="caret"></span></pre>
       <div class="flex items-center justify-between border-t border-neutral-800 px-4 py-2">
         <p class="font-mono text-[10px] text-neutral-500">10,000 runs · 1.8s</p>
@@ -232,14 +233,14 @@ details[open] .chev{transform:rotate(180deg)}
 <!-- ═════ SWAP IMPACT ═════ -->
 <section class="border-b border-neutral-100">
   <div class="mx-auto max-w-content px-5 py-16 md:py-20">
-    <p class="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-400">Swap impact</p>
-    <h2 class="max-w-[24ch] font-serif text-[clamp(1.9rem,4vw,2.8rem)] leading-[1.2] text-neutral-900">See exactly what moving one choice costs you</h2>
-    <p class="mt-4 max-w-xl text-[16px] leading-relaxed text-neutral-700">This is the question every student asks during choice filling, and the one no other tool can answer.</p>
+    <p class="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-400">Where you'll land</p>
+    <h2 class="max-w-[24ch] font-serif text-[clamp(1.9rem,4vw,2.8rem)] leading-[1.2] text-neutral-900">See exactly what each position on your list is worth</h2>
+    <p class="mt-4 max-w-xl text-[16px] leading-relaxed text-neutral-700">Allotment goes to the first choice that admits you, so order should be your true preference. What order changes is <em>which</em> seat you get — and the simulator shows that for every line. What the list is missing at the bottom is what decides whether you get one at all.</p>
 
     <div class="mt-9 overflow-hidden rounded-lg border border-neutral-200">
       <div class="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 bg-neutral-50 px-4 py-3">
         <p class="text-[14px] font-semibold text-neutral-900">Moving CSE Trichy above ECE Warangal</p>
-        <span class="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 font-mono text-[10px] text-rose-600">Net −4.1% chance of any seat</span>
+        <span class="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 font-mono text-[10px] text-neutral-600">Any seat: 68% either way · what changes is where</span>
       </div>
       <div class="grid gap-px bg-neutral-100 md:grid-cols-2">
         <div class="bg-white p-4">
@@ -390,8 +391,8 @@ details[open] .chev{transform:rotate(180deg)}
         <p class="mt-3 flex items-baseline gap-2 font-serif text-[44px] leading-none text-neutral-900"><span id="price">₹499</span> <span class="font-sans text-[14px] font-normal text-neutral-400">one-time</span></p>
         <p id="planNote" class="mt-2 text-[14px] text-neutral-500">Covers the whole JoSAA + CSAB cycle. Not a subscription.</p>
         <ul class="mt-6 space-y-2.5 text-[15px] text-neutral-700">
-          <li class="flex gap-2.5"><span class="text-neutral-900">✓</span> Choice-order builder with per-position odds</li>
-          <li class="flex gap-2.5"><span class="text-neutral-900">✓</span> Swap-impact analysis and saved scenarios</li>
+          <li class="flex gap-2.5"><span class="text-neutral-900">✓</span> Choice-list builder: odds of landing at every position</li>
+          <li class="flex gap-2.5"><span class="text-neutral-900">✓</span> Safety check and saved scenarios</li>
           <li class="flex gap-2.5"><span class="text-neutral-900">✓</span> <span id="paidRounds">Round-by-round freeze / float / slide calls</span></li>
           <li class="flex gap-2.5"><span class="text-neutral-900">✓</span> Deadline alerts on WhatsApp</li>
           <li class="flex gap-2.5"><span class="text-neutral-900">✓</span> Document and eligibility pre-flight</li>
