@@ -103,11 +103,13 @@ button.add[aria-pressed="true"]{background:#171717;color:#fff;border-color:#1717
     <!-- ── results ── -->
     <section id="out" hidden>
       <div class="flex flex-wrap items-end justify-between gap-4">
-        <div class="flex flex-wrap items-center gap-2" id="typeChips">
+        <div class="flex flex-wrap items-center gap-2" id="typeChips" title="Click to toggle; everything is on by default">
           <button type="button" class="chip" data-type="IIT" aria-pressed="true">IIT</button>
           <button type="button" class="chip" data-type="NIT" aria-pressed="true">NIT</button>
           <button type="button" class="chip" data-type="IIIT" aria-pressed="true">IIIT</button>
           <button type="button" class="chip" data-type="GFTI" aria-pressed="true">GFTI</button>
+          <span class="mx-1 h-4 w-px bg-neutral-200"></span>
+          <span id="branchChips" class="contents"></span>
           <span class="mx-1 h-4 w-px bg-neutral-200"></span>
           <button type="button" class="chip" data-tier="reach" aria-pressed="true">Reach</button>
           <button type="button" class="chip" data-tier="likely" aria-pressed="true">Likely</button>
@@ -205,14 +207,29 @@ const fmt = n => n.toLocaleString("en-IN");
 $("state").innerHTML = '<option value="" disabled selected>Choose…</option>' + STATES.map(s => `<option>${s}</option>`).join("");
 $("runs").textContent = fmt(JNR.RUNS);
 
-let DATA = null, RESULT = null, page = 1;
+let DATA = null, RESULT = null, page = 1, BRANCH_OF = [];
 const PAGE = 60;
 const types = new Set(["IIT", "NIT", "IIIT", "GFTI"]);
 const tiers = new Set(["reach", "likely", "safe"]);
+// Programme families, by keyword.  First match wins; the order matters
+// ("Mathematics and Computing" is CS, "Materials" is not Mechanical).
+const BRANCHES = [
+  ["CS / AI",     /computer|\bcse\b|artificial|data science|software|information tech|\bIT\b|cyber|machine learn|mathematics (and|&) computing|computational|animation/i],
+  ["Electronics", /electronic|communication|vlsi|instrumentation|signal/i],
+  ["Electrical",  /el[e]?ctrical|power|energy/i],
+  ["Mechanical",  /mechanical|production|industrial|manufactur|automobile|aerospace|aeronautic|aviation|robotics|mechatronic|engineering design|design engineering/i],
+  ["Civil / Arch",/civil|\bCE\b|architecture|planning|construction|infrastructure|geotechnical|structural|environmental/i],
+  ["Chem / Bio / Materials", /chemical|polymer|petroleum|ceramic|metallurg|material|mineral|mining|food|dairy|agricultur|textile|carpet|handloom|fashion|biotech|\bbio/i],
+];
+const OTHER = "Other";
+const branchOf = program => { for (const [name, re] of BRANCHES) if (re.test(program)) return name; return OTHER; };
+const branches = new Set([...BRANCHES.map(b => b[0]), OTHER]);
+$("branchChips").innerHTML = [...branches].map(b => `<button type="button" class="chip" data-branch="${b}" aria-pressed="true">${b}</button>`).join("");
 const tierOf = p => p >= 0.7 ? "safe" : p >= 0.3 ? "likely" : "reach";
 
 fetch("site-data/josaa.json").then(r => r.json()).then(d => {
   DATA = d;
+  BRANCH_OF = d.programs.map(branchOf);
   for (const id of ["season", "seasonHdr", "seasonFoot"]) $(id).textContent = d.season;
   $("loading").textContent = `${fmt(d.seats.length)} seats · JoSAA ${d.season} final round`;
   try { LIST = JSON.parse(localStorage.getItem("jnr-list-" + d.season) || "[]"); } catch (_) {}
@@ -270,7 +287,7 @@ function visible() {
   const q = $("q").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
   return RESULT.order.filter(i => {
     const seat = DATA.seats[RESULT.elig[i].s], inst = DATA.institutes[seat[0]];
-    if (!types.has(inst.type) || !tiers.has(tierOf(RESULT.sim.p[i]))) return false;
+    if (!types.has(inst.type) || !tiers.has(tierOf(RESULT.sim.p[i])) || !branches.has(BRANCH_OF[seat[1]])) return false;
     if (!q.length) return true;
     const hay = (inst.short + " " + inst.name + " " + DATA.programs[seat[1]]).toLowerCase();
     return q.every(w => hay.includes(w));
@@ -457,7 +474,7 @@ $("q").addEventListener("input", () => { page = 1; if (RESULT) draw(); });
 document.querySelectorAll("#typeChips .chip").forEach(b => b.addEventListener("click", () => {
   const on = b.getAttribute("aria-pressed") !== "true";
   b.setAttribute("aria-pressed", on);
-  const set = b.dataset.type ? types : tiers, key = b.dataset.type || b.dataset.tier;
+  const set = b.dataset.type ? types : b.dataset.branch ? branches : tiers, key = b.dataset.type || b.dataset.branch || b.dataset.tier;
   on ? set.add(key) : set.delete(key);
   page = 1; if (RESULT) draw();
 }));
