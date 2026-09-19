@@ -134,7 +134,7 @@ button.add[aria-pressed="true"]{background:#171717;color:#fff;border-color:#1717
         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 bg-neutral-50 px-4 py-3">
           <div>
             <p class="text-[14px] font-semibold text-neutral-900">My choice list <span id="listCount" class="font-mono text-[11px] font-normal text-neutral-500"></span></p>
-            <p class="text-[12px] text-neutral-500">Allotment goes to the <b>first</b> choice that admits you. Order is everything.</p>
+            <p class="text-[12px] text-neutral-500">Allotment goes to the <b>first</b> choice that admits you — so list them in your true order of preference. <span id="listLikely" class="text-neutral-800"></span></p>
           </div>
           <div class="flex items-center gap-4">
             <div class="text-right"><p class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">Any seat from list</p><p id="listAny" class="font-serif text-[26px] leading-none text-neutral-900">—</p></div>
@@ -143,7 +143,7 @@ button.add[aria-pressed="true"]{background:#171717;color:#fff;border-color:#1717
         </div>
         <ol id="listRows" class="divide-y divide-neutral-100"></ol>
         <p id="listEmpty" class="px-4 py-5 text-[13px] text-neutral-500">Add seats with <span class="rounded border border-neutral-300 px-1.5 font-mono text-[11px]">+</span> in the table below, in the order you'd fill them on JoSAA. Every move shows what it costs.</p>
-        <p id="listNote" class="border-t border-neutral-100 px-4 py-2.5 font-mono text-[10px] text-neutral-400" hidden>Saved in this browser. "At this position" = chance this is the seat you're allotted; earlier choices take priority.</p>
+        <p id="listNote" class="border-t border-neutral-100 px-4 py-2.5 font-mono text-[10px] text-neutral-400" hidden>Saved in this browser. "At this position" = chance this is the seat you're allotted; earlier choices take priority. Reordering never changes the any-seat number — only which seat you end up with. To raise it, add safer seats at the bottom.</p>
       </div>
 
       <div class="mt-4 overflow-x-auto rounded-lg border border-neutral-200">
@@ -326,6 +326,9 @@ function drawList() {
   const { perPos, any } = scoreList(order);
   $("listCount").textContent = LIST.length ? `· ${LIST.length} choice${LIST.length > 1 ? "s" : ""}` : "";
   $("listAny").textContent = LIST.length ? Math.round(any * 100) + "%" : "—";
+  let best = -1; perPos.forEach((p, k) => { if (best < 0 || p > perPos[best]) best = k; });
+  $("listLikely").textContent = LIST.length && perPos[best] > 0
+    ? `Most likely outcome: #${best + 1} ${DATA.institutes[DATA.seats[LIST[best]][0]].short} (${Math.round(perPos[best] * 100)}%)` : "";
   $("listEmpty").hidden = LIST.length > 0;
   $("listNote").hidden = LIST.length === 0;
   $("listRows").innerHTML = LIST.map((s, k) => {
@@ -368,12 +371,16 @@ $("listRows").addEventListener("click", e => {
   if (rm) { toggleSeat(LIST[+rm.dataset.remove]); return; }
   if (!mv) return;
   const [k, d] = mv.dataset.move.split(":").map(Number), j = k + d;
-  const before = scoreList(listOrder()).any;
+  // Order never changes whether you get *a* seat (the allotment is a
+  // deferred-acceptance mechanism); it changes *which* one.  So the impact
+  // of a move is the shift in odds between the two seats that traded places.
+  const before = scoreList(listOrder()).perPos;
   [LIST[k], LIST[j]] = [LIST[j], LIST[k]];
   saveList(); drawList();
-  const after = scoreList(listOrder()).any, delta = Math.round((after - before) * 100);
-  const seat = DATA.seats[LIST[j]];
-  toast(`${DATA.institutes[seat[0]].short} → #${j + 1}: any-seat ${Math.round(before * 100)}% → ${Math.round(after * 100)}% (${delta > 0 ? "+" : ""}${delta})`);
+  const after = scoreList(listOrder()).perPos;
+  const moved = DATA.seats[LIST[j]], other = DATA.seats[LIST[k]];
+  const pc = x => Math.round(x * 100) + "%";
+  toast(`${DATA.institutes[moved[0]].short} → #${j + 1}: ${pc(before[k])} → ${pc(after[j])}. ${DATA.institutes[other[0]].short}: ${pc(before[j])} → ${pc(after[k])}.`);
 });
 $("listClear").addEventListener("click", () => { LIST.forEach(s => document.querySelectorAll(`button.add[data-add="${s}"]`).forEach(b => { b.setAttribute("aria-pressed", false); b.textContent = "+"; })); LIST = []; saveList(); drawList(); });
 
