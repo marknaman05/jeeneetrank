@@ -54,10 +54,13 @@ export default {
         "X-Title": "jeeneetrank",
       },
       body: JSON.stringify({
-        model: env.MODEL || "deepseek/deepseek-v4.1-flash",
+        model: env.MODEL || "deepseek/deepseek-chat-v3.1",
         max_tokens: MAX_TOKENS,
         temperature: 0.4,
         stream: true,
+        // DeepSeek's newer models "think" first and can spend the whole
+        // budget on it; this is a chat, not a maths olympiad.
+        reasoning: { enabled: false },
         messages: [{ role: "system", content: system(context) }, ...messages],
       }),
     });
