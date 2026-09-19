@@ -64,6 +64,7 @@ const MAX_TURNS = 12;
     .jnr-m.u{align-self:flex-end;background:#171717;color:#fff;border-bottom-right-radius:4px}
     .jnr-m.a{align-self:flex-start;background:#fff;border:1px solid #e5e5e5;color:#171717;border-bottom-left-radius:4px}
     .jnr-m.a b{font-weight:600}
+    .jnr-m.a a{color:#0e7490;text-decoration:underline;text-underline-offset:2px}
     .jnr-m.err{align-self:center;background:#fff1f2;color:#be123c;border:1px solid #fecdd3;font-size:13px}
     .jnr-sug{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
     .jnr-sug button{border:1px solid #171717;background:#fff;border-radius:999px;padding:4px 10px;font:500 12px/1.3 inherit;color:#171717;cursor:pointer}
@@ -188,7 +189,9 @@ const MAX_TURNS = 12;
     const m = body.match(/\n?SUGGEST:\s*([\d,\s]+)\s*$/);
     if (m) { suggest = m[1].split(",").map(s => parseInt(s, 10)).filter(Number.isInteger); body = body.slice(0, m.index); }
     const esc = s => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
-    let html = esc(body).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/^\s*[-•]\s+/gm, "• ");
+    let html = esc(body).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/^\s*[-•]\s+/gm, "• ")
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+      .replace(/(^|[\s(])(https?:\/\/jeeneetrank\.com[^\s)]*)/g, '$1<a href="$2">$2</a>');
     el.innerHTML = html || `<span class="jnr-dots"><i></i><i></i><i></i></span>`;
     if (final && suggest && suggest.length && window.JNR_PAGE) {
       const data = window.JNR_PAGE.data(), wrap = document.createElement("div"); wrap.className = "jnr-sug";
