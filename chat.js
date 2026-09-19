@@ -29,7 +29,7 @@ const MAX_TURNS = 12;
     <section id="jnrChatPanel" hidden aria-label="Chat">
       <header>
         <div>
-          <p class="jnr-k">jeeneetrank · assistant</p>
+          <p class="jnr-k">Counsellor</p>
           <p class="jnr-t">Ask anything about your seats</p>
         </div>
         <button id="jnrChatClose" type="button" aria-label="Close">✕</button>
@@ -45,7 +45,6 @@ const MAX_TURNS = 12;
         <textarea id="jnrChatInput" rows="1" placeholder="Type a question… (English / Hindi)" maxlength="2000"></textarea>
         <button type="submit" aria-label="Send">↑</button>
       </form>
-      <p class="jnr-fine">Answers use the numbers on this page. Verify on josaa.nic.in before you submit. No login, nothing stored.</p>
     </section>`;
   document.body.appendChild(root);
 
@@ -55,9 +54,9 @@ const MAX_TURNS = 12;
     #jnrChatFab{display:flex;align-items:center;gap:8px;background:#171717;color:#fff;border:0;border-radius:999px;padding:12px 18px;font:500 14px/1 inherit;box-shadow:0 20px 25px -5px rgba(0,0,0,.25);cursor:pointer}
     #jnrChatFab:hover{background:#000}
     #jnrChatPanel{position:absolute;right:0;bottom:0;width:min(420px,calc(100vw - 32px));height:min(640px,calc(100vh - 48px));display:flex;flex-direction:column;background:#fff;border:1px solid #e5e5e5;border-radius:16px;box-shadow:0 25px 50px -12px rgba(0,0,0,.3);overflow:hidden}
-    #jnrChatPanel header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#171717;color:#fff}
-    #jnrChatPanel .jnr-k{margin:0;font-family:"Geist Mono",ui-monospace,monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#a3a3a3}
-    #jnrChatPanel .jnr-t{margin:2px 0 0;font-family:"Instrument Serif",ui-serif,Georgia,serif;font-size:19px;letter-spacing:0}
+    #jnrChatPanel header{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;background:#171717;color:#fff}
+    #jnrChatPanel .jnr-k{margin:0;font-family:"Geist Mono",ui-monospace,monospace;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#a3a3a3}
+    #jnrChatPanel .jnr-t{margin:4px 0 0;font-family:"Instrument Serif",ui-serif,Georgia,serif;font-size:24px;letter-spacing:0}
     #jnrChatClose{background:none;border:0;color:#a3a3a3;font-size:16px;cursor:pointer}
     #jnrChatClose:hover{color:#fff}
     #jnrChatLog{flex:1;overflow-y:auto;padding:14px 14px 4px;display:flex;flex-direction:column;gap:10px;background:#fafafa}
@@ -78,7 +77,6 @@ const MAX_TURNS = 12;
     #jnrChatInput:focus{border-color:#171717}
     #jnrChatForm button{width:40px;border:0;border-radius:10px;background:#171717;color:#fff;font-size:16px;cursor:pointer}
     #jnrChatForm button[disabled]{opacity:.4;cursor:default}
-    .jnr-fine{margin:0;padding:0 14px 10px;font-family:"Geist Mono",ui-monospace,monospace;font-size:10px;color:#a3a3a3;background:#fff}
     .jnr-dots i{display:inline-block;width:5px;height:5px;margin-right:3px;border-radius:50%;background:#a3a3a3;animation:jnrb 1s infinite}
     .jnr-dots i:nth-child(2){animation-delay:.15s}.jnr-dots i:nth-child(3){animation-delay:.3s}
     @keyframes jnrb{0%,80%,100%{opacity:.3}40%{opacity:1}}

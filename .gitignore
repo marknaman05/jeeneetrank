@@ -3,3 +3,4 @@ data/josaa/raw/
 __pycache__/
 .DS_Store
 node_modules/
+.dev.vars
