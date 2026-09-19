@@ -74,7 +74,7 @@ input:focus,select:focus,textarea:focus{outline:none;box-shadow:none;border-colo
       <div class="flex items-baseline justify-between border-b border-neutral-200 bg-neutral-50 px-5 py-4">
         <div>
           <p class="text-[14px] font-semibold text-neutral-900">1:1 session · 45 min · video call</p>
-          <p class="mt-0.5 text-[13px] text-neutral-500">Meet link on WhatsApp and email once paid.</p>
+          <p class="mt-0.5 text-[13px] text-neutral-500">Calendar invite with the Meet link the moment you pay.</p>
         </div>
         <p class="text-right"><span class="font-serif text-[30px] leading-none text-neutral-900">₹399</span><br><span class="font-mono text-[11px] text-neutral-500">+ GST</span></p>
       </div>
@@ -211,7 +211,8 @@ $("bf").addEventListener("submit", async e => {
     const when = `${dayName[d.getUTCDay()]} ${d.getUTCDate()} ${monName[d.getUTCMonth()]}, ${fmtTime(mins)} IST`;
     if (rec.status === "paid") {
       $("doneTitle").innerHTML = `See you on <span>${when}</span>`;
-      $("doneBody").innerHTML = `Booking <span class="font-mono text-neutral-900">#${rec.id}</span> is paid and confirmed. The Meet link goes to <span class="font-mono text-neutral-900">${rec.phone}</span> on WhatsApp and to your email. Before the call, run your numbers on the <a class="underline underline-offset-2" href="predict.html">free predictor</a> and build a first draft of your list — we'll start from there.`;
+      const meet = rec.meet ? `Your Google Meet link: <a class="font-mono text-neutral-900 underline underline-offset-2" href="${rec.meet}">${rec.meet.replace(/^https?:\/\//, "")}</a> — it's also in the calendar invite we've sent to your email.` : `A calendar invite with the Google Meet link is on its way to your email, and we'll message <span class="font-mono text-neutral-900">${rec.phone}</span> on WhatsApp.`;
+      $("doneBody").innerHTML = `Booking <span class="font-mono text-neutral-900">#${rec.id}</span> is paid and confirmed. ${meet} Before the call, run your numbers on the <a class="underline underline-offset-2" href="predict.html">free predictor</a> and build a first draft of your list — we'll start from there.`;
       return true;
     }
     if (rec.status === "failed") {

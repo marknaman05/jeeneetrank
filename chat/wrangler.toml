@@ -12,6 +12,9 @@ compatibility_date = "2025-09-01"
 DODO_ENV = "test"
 DODO_PRODUCT_ID = "pdt_0NnvxnhFgwF2gzJkHT4c9"
 SITE_URL = "https://jeeneetrank.com"
+# Google Calendar for confirmed bookings (see google-auth.py).  Secrets:
+# GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN.
+GOOGLE_CALENDAR_ID = "primary"
 # Any OpenRouter model id.  DeepSeek is cheap and good at this kind of Q&A.
 MODEL = "deepseek/deepseek-chat-v3.1"
 ALLOWED_ORIGINS = "https://jeeneetrank.com,https://www.jeeneetrank.com,http://localhost:8765,http://localhost:8080"

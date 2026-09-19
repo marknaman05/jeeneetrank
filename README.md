@@ -39,4 +39,4 @@ Slots are 45 min, 6–9 pm IST weekdays / 11 am–9 pm weekends, next 14 days. P
 curl -H "Authorization: Bearer $ADMIN_TOKEN" https://jeeneetrank-chat.marknaman05.workers.dev/bookings
 ```
 
-(`ADMIN_TOKEN` is a Worker secret; a copy is in `chat/.dev.vars`, gitignored.) Only `status: "paid"` bookings are real; `?status=paid` filters.
+(`ADMIN_TOKEN` is a Worker secret; a copy is in `chat/.dev.vars`, gitignored.) Only `status: "paid"` bookings are real; `?status=paid` filters. On payment the Worker also creates a Google Calendar event (with a Meet link, student invited) in the counsellor's calendar — one-time auth via `chat/google-auth.py`, secrets `GOOGLE_CLIENT_ID/SECRET/REFRESH_TOKEN`.

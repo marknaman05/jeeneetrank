@@ -69,7 +69,7 @@ export default {
       const id = (new URL(request.url).searchParams.get("id") || "").toUpperCase();
       const rec = /^[A-Z0-9]{8}$/.test(id) ? await env.BOOKINGS.get("booking:" + id, "json") : null;
       if (!rec) return json({ error: "no such booking" }, 404, cors);
-      return json({ id, status: rec.status, slot: rec.slot, phone: rec.phone }, 200, cors);
+      return json({ id, status: rec.status, slot: rec.slot, phone: rec.phone, meet: rec.meet || "" }, 200, cors);
     }
     if (path === "/dodo-webhook" && request.method === "POST") {
       const raw = await request.text();
@@ -83,6 +83,14 @@ export default {
           rec.amount = ev.data.total_amount; rec.currency = ev.data.currency;
           await env.BOOKINGS.put("booking:" + id, JSON.stringify(rec));
           await confirmSlot(env, rec.slot, id);
+          // Calendar event with a Meet link, invite to the student.  A
+          // failure here must not fail the webhook (Dodo would retry and
+          // we would double-create); it is logged and visible in /bookings.
+          try {
+            const ev2 = await createCalendarEvent(env, rec);
+            rec.calendar_event = ev2.id; rec.meet = ev2.hangoutLink || (ev2.conferenceData?.entryPoints || []).find(e => e.entryPointType === "video")?.uri || "";
+          } catch (e) { rec.calendar_error = String(e).slice(0, 300); console.log("calendar failed", rec.calendar_error); }
+          await env.BOOKINGS.put("booking:" + id, JSON.stringify(rec));
         }
       } else if ((ev.type === "payment.failed" || ev.type === "payment.cancelled") && id) {
         const rec = await env.BOOKINGS.get("booking:" + id, "json");
@@ -231,6 +239,40 @@ async function releaseSlot(env, slot, id) {
   const idx = (await readIndex(env)).filter(t => !(t.slot === slot && t.id === id));
   await env.BOOKINGS.put("taken", JSON.stringify(idx));
 }
+/* Google Calendar: one event in the counsellor's calendar per paid
+ * booking, with a Meet link, the student invited.  Auth is a refresh token
+ * for the counsellor's own Google account (see google-auth.py). */
+async function googleAccessToken(env) {
+  const r = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ client_id: env.GOOGLE_CLIENT_ID, client_secret: env.GOOGLE_CLIENT_SECRET, refresh_token: env.GOOGLE_REFRESH_TOKEN, grant_type: "refresh_token" }),
+  });
+  if (!r.ok) throw new Error("google token " + r.status + " " + (await r.text()).slice(0, 200));
+  return (await r.json()).access_token;
+}
+async function createCalendarEvent(env, rec) {
+  if (!env.GOOGLE_REFRESH_TOKEN) throw new Error("google calendar not configured");
+  const token = await googleAccessToken(env);
+  const start = rec.slot + ":00", endMin = Number(rec.slot.slice(14, 16)) + SLOT_MINUTES, endH = Number(rec.slot.slice(11, 13)) + Math.floor(endMin / 60);
+  const end = `${rec.slot.slice(0, 11)}${String(endH).padStart(2, "0")}:${String(endMin % 60).padStart(2, "0")}:00`;
+  const body = {
+    summary: `jeeneetrank 1:1 — ${rec.name} (${rec.exam} ${rec.rank}, ${rec.category})`,
+    description: `Booking #${rec.id}\nWhatsApp: ${rec.phone}\nExam: ${rec.exam} · Rank ${rec.rank} · ${rec.category} · ${rec.state}\n\nWants to cover:\n${rec.notes || "(nothing specific)"}\n\nBefore the call: run your numbers on https://jeeneetrank.com/predict.html and build a first draft of your list.`,
+    start: { dateTime: start, timeZone: "Asia/Kolkata" },
+    end: { dateTime: end, timeZone: "Asia/Kolkata" },
+    attendees: [{ email: rec.email, displayName: rec.name }],
+    conferenceData: { createRequest: { requestId: "jnr-" + rec.id, conferenceSolutionKey: { type: "hangoutsMeet" } } },
+    reminders: { useDefault: false, overrides: [{ method: "email", minutes: 24 * 60 }, { method: "popup", minutes: 60 }] },
+    guestsCanModify: false,
+  };
+  const cal = encodeURIComponent(env.GOOGLE_CALENDAR_ID || "primary");
+  const r = await fetch(`https://www.googleapis.com/calendar/v3/calendars/${cal}/events?conferenceDataVersion=1&sendUpdates=all`, {
+    method: "POST", headers: { "content-type": "application/json", authorization: `Bearer ${token}` }, body: JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error("calendar " + r.status + " " + (await r.text()).slice(0, 200));
+  return r.json();
+}
+
 function dodoHost(env) { return env.DODO_ENV === "live" ? "https://live.dodopayments.com" : "https://test.dodopayments.com"; }
 
 /* Standard Webhooks signature check (what Dodo uses): HMAC-SHA256 over
