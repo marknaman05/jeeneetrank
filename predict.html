@@ -131,9 +131,9 @@ button.add[aria-pressed="true"]{background:#171717;color:#fff;border-color:#1717
     <!-- ── results ── -->
     <section id="out" hidden>
       <div class="mt-4 grid gap-px overflow-hidden rounded-lg border border-neutral-200 bg-neutral-200 sm:grid-cols-3">
-        <div class="bg-white p-4"><p class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">Eligible seats</p><p id="nElig" class="mt-1 font-serif text-[28px] leading-none">—</p></div>
-        <div class="bg-white p-4"><p class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">Safe (≥ 70%)</p><p id="nSafe" class="mt-1 font-serif text-[28px] leading-none">—</p></div>
-        <div class="bg-white p-4"><p class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">Any seat in this view</p><p id="anySeat" class="mt-1 font-serif text-[28px] leading-none">—</p></div>
+        <div class="bg-white p-4"><p class="font-mono text-[12px] uppercase tracking-[0.1em] text-neutral-500">Eligible seats</p><p id="nElig" class="mt-1 font-serif text-[36px] leading-none">—</p></div>
+        <div class="bg-white p-4"><p class="font-mono text-[12px] uppercase tracking-[0.1em] text-neutral-500">Safe (≥ 70%)</p><p id="nSafe" class="mt-1 font-serif text-[36px] leading-none">—</p></div>
+        <div class="bg-white p-4"><p class="font-mono text-[12px] uppercase tracking-[0.1em] text-neutral-500">Any seat in this view</p><p id="anySeat" class="mt-1 font-serif text-[36px] leading-none">—</p></div>
       </div>
 
       <!-- ── choice list ── -->
@@ -174,10 +174,10 @@ button.add[aria-pressed="true"]{background:#171717;color:#fff;border-color:#1717
 
       <!-- ── round advisor ── -->
       <details id="advisor" class="mt-4 rounded-lg border border-neutral-200" hidden>
-        <summary class="flex cursor-pointer flex-wrap items-center justify-between gap-3 px-4 py-3">
+        <summary class="flex cursor-pointer flex-wrap items-center justify-between gap-3 px-5 py-4">
           <div>
-            <p class="text-[14px] font-semibold text-neutral-900">Round advisor · freeze or float?</p>
-            <p class="text-[12px] text-neutral-500">Got an allotment? See what floating could still win from the choices above it.</p>
+            <p class="text-[17px] font-semibold text-neutral-900">Round advisor · freeze or float?</p>
+            <p class="text-[14px] text-neutral-500">Got an allotment? See what floating could still win from the choices above it.</p>
           </div>
           <span class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">open</span>
         </summary>
@@ -196,29 +196,29 @@ button.add[aria-pressed="true"]{background:#171717;color:#fff;border-color:#1717
         <table class="w-full min-w-[640px] text-left">
           <thead>
             <tr class="border-b border-neutral-100 bg-neutral-50">
-              <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400">Seat</th>
-              <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400"><abbr title="Quota = who competes for the seat: All India, or an NIT's Home-state / Other-state halves. Seat = its reservation category (OPEN, EWS, OBC-NCL, SC, ST, PwD). Female-only = the supernumerary pool only women see." class="cursor-help underline decoration-dotted underline-offset-2">Quota · seat</abbr></th>
-              <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400"><span id="seasonHdr">2025</span> closing</th>
-              <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400">Your chance</th>
+              <th class="px-5 py-3.5 font-mono text-[12px] font-normal uppercase tracking-[0.1em] text-neutral-500">Seat</th>
+              <th class="px-5 py-3.5 font-mono text-[12px] font-normal uppercase tracking-[0.1em] text-neutral-500"><abbr title="Quota = who competes for the seat: All India, or an NIT's Home-state / Other-state halves. Seat = its reservation category (OPEN, EWS, OBC-NCL, SC, ST, PwD). Female-only = the supernumerary pool only women see." class="cursor-help underline decoration-dotted underline-offset-2">Quota · seat</abbr></th>
+              <th class="px-5 py-3.5 font-mono text-[12px] font-normal uppercase tracking-[0.1em] text-neutral-500"><span id="seasonHdr">2025</span> closing</th>
+              <th class="px-5 py-3.5 font-mono text-[12px] font-normal uppercase tracking-[0.1em] text-neutral-500">Your chance</th>
               <th class="px-2 py-2.5"></th>
             </tr>
             <tr class="border-b border-neutral-200 bg-white">
-              <th class="px-3 py-2 font-normal"><input data-col="seat" type="search" placeholder="Search college or branch…" class="colf h-9 w-full rounded-md border border-neutral-200 px-3 text-[13px] font-normal"></th>
-              <th class="px-3 py-2 font-normal"><input data-col="quota" type="search" placeholder="home, obc, female…" class="colf h-9 w-full rounded-md border border-neutral-200 px-3 text-[13px] font-normal"></th>
-              <th class="px-3 py-2 font-normal"><input data-col="closing" type="number" min="1" placeholder="up to…" class="colf h-9 w-full rounded-md border border-neutral-200 px-3 font-mono text-[13px] font-normal"></th>
-              <th class="px-3 py-2 font-normal"><input data-col="chance" type="number" min="0" max="100" placeholder="min %" class="colf h-9 w-full rounded-md border border-neutral-200 px-3 font-mono text-[13px] font-normal"></th>
+              <th class="px-3 py-2 font-normal"><input data-col="seat" type="search" placeholder="Search college or branch…" class="colf h-11 w-full rounded-md border border-neutral-200 px-3.5 text-[15px] font-normal"></th>
+              <th class="px-3 py-2 font-normal"><input data-col="quota" type="search" placeholder="home, obc, female…" class="colf h-11 w-full rounded-md border border-neutral-200 px-3.5 text-[15px] font-normal"></th>
+              <th class="px-3 py-2 font-normal"><input data-col="closing" type="number" min="1" placeholder="up to…" class="colf h-11 w-full rounded-md border border-neutral-200 px-3.5 font-mono text-[14px] font-normal"></th>
+              <th class="px-3 py-2 font-normal"><input data-col="chance" type="number" min="0" max="100" placeholder="min %" class="colf h-11 w-full rounded-md border border-neutral-200 px-3.5 font-mono text-[14px] font-normal"></th>
               <th class="px-2 py-2"></th>
             </tr>
           </thead>
           <tbody id="rows" class="divide-y divide-neutral-100"></tbody>
         </table>
-        <div class="flex items-center justify-between border-t border-neutral-100 px-4 py-3">
-          <p id="shown" class="font-mono text-[10px] text-neutral-400"></p>
-          <button id="more" type="button" class="text-[13px] text-neutral-700 underline-offset-2 hover:underline" hidden>Show more</button>
+        <div class="flex items-center justify-between border-t border-neutral-100 px-5 py-4">
+          <p id="shown" class="font-mono text-[12px] text-neutral-500"></p>
+          <button id="more" type="button" class="text-[15px] font-medium text-neutral-700 underline-offset-2 hover:underline" hidden>Show more</button>
         </div>
       </div>
 
-      <p class="mt-4 text-[12px] leading-relaxed text-neutral-500">
+      <p class="mt-4 text-[14px] leading-relaxed text-neutral-500">
         <b class="text-neutral-700">How to read it.</b> "Your chance" is the share of simulated years in which this seat's final-round closing rank is at or beyond your rank. Trend arrows compare last two seasons. Calibration on 2025 (predicted from 2016–24): seats we called 70–80% got in 74% of the time; 90–100% → 94%. Verify everything on josaa.nic.in before you submit.
       </p>
     </section>
@@ -380,19 +380,19 @@ function draw() {
                 : closing < prev * 0.95 ? `<span class="text-rose-500" title="closed earlier than ${fmt(prev)} last season">↓</span>` : `<span class="text-neutral-300">→</span>`;
     const prog = DATA.programs[seat[1]].replace(/\s*\(.*?\)\s*$/, m => `<span class="text-neutral-400"> ${m.trim()}</span>`);
     return `<tr>
-      <td class="px-4 py-3"><p class="text-[14px] font-semibold text-neutral-900">${inst.short}</p><p class="text-[13px] text-neutral-600">${prog}</p></td>
-      <td class="px-4 py-3 text-[12px] leading-snug text-neutral-700">
+      <td class="px-5 py-4"><p class="text-[17px] font-semibold text-neutral-900">${inst.short}</p><p class="mt-0.5 text-[15px] text-neutral-600">${prog}</p></td>
+      <td class="px-5 py-4 text-[14px] leading-snug text-neutral-700">
         <p>${quotaLabel(DATA.quotas[seat[2]])}</p>
         <p class="text-neutral-500">${DATA.categories[seat[3]]} seat</p>
-        ${DATA.genders[seat[4]].startsWith("Female") ? `<span class="mt-1 inline-block rounded-full border border-fuchsia-200 bg-fuchsia-50 px-1.5 font-mono text-[9.5px] text-fuchsia-700">female-only</span>` : ""}
+        ${DATA.genders[seat[4]].startsWith("Female") ? `<span class="mt-1 inline-block whitespace-nowrap rounded-full border border-fuchsia-200 bg-fuchsia-50 px-2 py-0.5 font-mono text-[11px] text-fuchsia-700">female-only</span>` : ""}
       </td>
-      <td class="px-4 py-3 font-mono text-[12px] text-neutral-700" style="font-variant-numeric:tabular-nums">${fmt(closing)} ${trend}<br><span class="text-[10px] text-neutral-400">your rank ${fmt(elig[i].rank)}</span></td>
-      <td class="px-4 py-3">
-        <div class="flex items-center gap-2"><span class="w-9 font-mono text-[12px] text-neutral-900" style="font-variant-numeric:tabular-nums">${pct}%</span><span class="rounded-full border ${cls} px-2 py-0.5 font-mono text-[9.5px]">${t}</span></div>
-        <div class="mt-2 h-1 w-full overflow-hidden rounded-full bg-neutral-100"><div class="bar h-full rounded-full ${bar}" style="width:${Math.max(2, pct)}%"></div></div>
+      <td class="px-5 py-4 font-mono text-[16px] text-neutral-900" style="font-variant-numeric:tabular-nums">${fmt(closing)} ${trend}<br><span class="text-[12px] text-neutral-500">your rank ${fmt(elig[i].rank)}</span></td>
+      <td class="px-5 py-4">
+        <div class="flex items-center gap-2.5"><span class="w-14 font-serif text-[26px] leading-none text-neutral-900" style="font-variant-numeric:tabular-nums">${pct}%</span><span class="rounded-full border ${cls} px-2.5 py-0.5 font-mono text-[11px]">${t}</span></div>
+        <div class="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-neutral-100"><div class="bar h-full rounded-full ${bar}" style="width:${Math.max(2, pct)}%"></div></div>
       </td>
-      <td class="px-2 py-3 text-right"><button type="button" data-add="${elig[i].s}" aria-pressed="${LIST.includes(elig[i].s)}" title="add to my choice list" class="add h-7 w-7 rounded-md border border-neutral-200 font-mono text-[13px] text-neutral-600 transition-colors hover:border-neutral-900 hover:text-neutral-900 aria-pressed:bg-neutral-900">${LIST.includes(elig[i].s) ? "✓" : "+"}</button></td></tr>`;
-  }).join("") || `<tr><td colspan="5" class="px-4 py-8 text-center text-[14px] text-neutral-500">No eligible seats match. Check the rank, the home state, and whether IITs need an Advanced rank.</td></tr>`;
+      <td class="px-3 py-4 text-right"><button type="button" data-add="${elig[i].s}" aria-pressed="${LIST.includes(elig[i].s)}" title="add to my choice list" class="add h-10 w-10 rounded-lg border border-neutral-200 font-mono text-[18px] text-neutral-600 transition-colors hover:border-neutral-900 hover:text-neutral-900 aria-pressed:bg-neutral-900">${LIST.includes(elig[i].s) ? "✓" : "+"}</button></td></tr>`;
+  }).join("") || `<tr><td colspan="5" class="px-5 py-10 text-center text-[16px] text-neutral-500">No eligible seats match. Check the rank, the home state, and whether IITs need an Advanced rank.</td></tr>`;
   $("shown").textContent = `showing ${fmt(shown.length)} of ${fmt(vis.length)} · highest chance first · seats under 1% hidden`;
   $("more").hidden = shown.length >= vis.length;
 }
