@@ -134,21 +134,39 @@ button.add[aria-pressed="true"]{background:#171717;color:#fff;border-color:#1717
       </div>
 
       <!-- ── choice list ── -->
-      <div id="listPanel" class="mt-4 rounded-lg border border-neutral-900">
-        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 bg-neutral-50 px-4 py-3">
-          <div>
-            <p class="text-[14px] font-semibold text-neutral-900">My choice list <span id="listCount" class="font-mono text-[11px] font-normal text-neutral-500"></span></p>
-            <p class="text-[12px] text-neutral-500">Allotment goes to the <b>first</b> choice that admits you — so list them in your true order of preference. <span id="listLikely" class="text-neutral-800"></span></p>
+      <div id="listPanel" class="mt-4 overflow-hidden rounded-lg border border-neutral-900 bg-white">
+        <div class="bg-neutral-900 px-5 py-4 text-white">
+          <div class="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p class="font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-400">Choice list simulator</p>
+              <p class="mt-1 font-serif text-[24px] leading-none">My choice list <span id="listCount" class="font-sans text-[13px] text-neutral-400"></span></p>
+              <p class="mt-2 max-w-xl text-[13px] leading-relaxed text-neutral-300">Allotment goes to the <b class="text-white">first</b> choice that admits you, so list them in your true order. <span id="listLikely" class="text-cyan-200"></span></p>
+            </div>
+            <div class="flex items-center gap-4">
+              <svg viewBox="0 0 44 44" class="h-14 w-14 -rotate-90">
+                <circle cx="22" cy="22" r="18" fill="none" stroke="#404040" stroke-width="4"/>
+                <circle id="listRing" cx="22" cy="22" r="18" fill="none" stroke="#a5f3fc" stroke-width="4" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="113" style="transition:stroke-dashoffset .6s cubic-bezier(0.22,1,0.36,1)"/>
+              </svg>
+              <div>
+                <p class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">Any seat from list</p>
+                <p id="listAny" class="font-serif text-[34px] leading-none">—</p>
+              </div>
+            </div>
           </div>
-          <div class="flex items-center gap-4">
-            <div class="text-right"><p class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">Any seat from list</p><p id="listAny" class="font-serif text-[26px] leading-none text-neutral-900">—</p></div>
+          <!-- where you land: one stacked bar, a segment per choice, grey for "no seat" -->
+          <div id="landBar" class="mt-4 flex h-2.5 w-full overflow-hidden rounded-full bg-neutral-700" hidden></div>
+          <div id="landKey" class="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] text-neutral-400" hidden></div>
+        </div>
+        <ol id="listRows" class="divide-y divide-neutral-100"></ol>
+        <p id="listEmpty" class="px-5 py-6 text-[13px] text-neutral-500">Add seats with <span class="rounded border border-neutral-300 px-1.5 font-mono text-[11px]">+</span> in the table below, in the order you'd fill them on JoSAA. You'll see where you're most likely to land, and whether the list needs more safety at the bottom.</p>
+        <div id="listFoot" class="flex flex-wrap items-center justify-between gap-3 border-t border-neutral-100 bg-neutral-50 px-5 py-3" hidden>
+          <p class="font-mono text-[10px] leading-relaxed text-neutral-400">Saved in this browser · "at this position" = chance this is the seat you're allotted; earlier choices take priority. Reordering never changes the any-seat number, only where you land — to raise it, add safer seats at the bottom.</p>
+          <div class="flex gap-4">
+            <button id="listShare" type="button" class="text-[12px] text-neutral-700 underline-offset-2 hover:underline">Copy link</button>
             <button id="listCopy" type="button" class="text-[12px] text-neutral-700 underline-offset-2 hover:underline">Copy as text</button>
             <button id="listClear" type="button" class="text-[12px] text-neutral-500 underline-offset-2 hover:underline">Clear</button>
           </div>
         </div>
-        <ol id="listRows" class="divide-y divide-neutral-100"></ol>
-        <p id="listEmpty" class="px-4 py-5 text-[13px] text-neutral-500">Add seats with <span class="rounded border border-neutral-300 px-1.5 font-mono text-[11px]">+</span> in the table below, in the order you'd fill them on JoSAA. Every move shows what it costs.</p>
-        <p id="listNote" class="border-t border-neutral-100 px-4 py-2.5 font-mono text-[10px] text-neutral-400" hidden>Saved in this browser. "At this position" = chance this is the seat you're allotted; earlier choices take priority. Reordering never changes the any-seat number — only which seat you end up with. To raise it, add safer seats at the bottom.</p>
       </div>
 
       <!-- ── round advisor ── -->
@@ -242,6 +260,9 @@ fetch("site-data/josaa.json").then(r => r.json()).then(d => {
   for (const id of ["season", "seasonHdr", "seasonFoot"]) $(id).textContent = d.season;
   $("loading").textContent = `${fmt(d.seats.length)} seats · JoSAA ${d.season} final round`;
   try { LIST = JSON.parse(localStorage.getItem("jnr-list-" + d.season) || "[]"); } catch (_) {}
+  // A shared link carries the list as seat ids: ?list=12,340,2201
+  const shared = new URLSearchParams(location.search).get("list");
+  if (shared) { LIST = shared.split(",").map(Number).filter(x => Number.isInteger(x) && x >= 0 && x < d.seats.length); saveList(); }
   fromQuery();
 });
 
@@ -360,36 +381,56 @@ function scoreList(order) {
   return { perPos, any: r.any };
 }
 
+const PALETTE = ["#a5f3fc", "#67e8f9", "#22d3ee", "#06b6d4", "#0891b2", "#0e7490", "#155e75", "#164e63"];
+const colourAt = k => PALETTE[Math.min(k, PALETTE.length - 1)];
+
 function drawList() {
   if (!RESULT) return;
   const order = listOrder();
   const { perPos, any } = scoreList(order);
-  $("listCount").textContent = LIST.length ? `· ${LIST.length} choice${LIST.length > 1 ? "s" : ""}` : "";
-  $("listAny").textContent = LIST.length ? Math.round(any * 100) + "%" : "—";
+  const n = LIST.length;
+  $("listCount").textContent = n ? `· ${n} choice${n > 1 ? "s" : ""}` : "";
+  $("listAny").textContent = n ? Math.round(any * 100) + "%" : "—";
+  $("listRing").setAttribute("stroke-dashoffset", (113 - 113 * (n ? any : 0)).toFixed(1));
   let best = -1; perPos.forEach((p, k) => { if (best < 0 || p > perPos[best]) best = k; });
-  $("listLikely").textContent = LIST.length && perPos[best] > 0
-    ? `Most likely outcome: #${best + 1} ${DATA.institutes[DATA.seats[LIST[best]][0]].short} (${Math.round(perPos[best] * 100)}%)` : "";
-  $("listEmpty").hidden = LIST.length > 0;
-  $("listNote").hidden = LIST.length === 0;
+  $("listLikely").textContent = n && perPos[best] > 0
+    ? `Most likely: #${best + 1} ${DATA.institutes[DATA.seats[LIST[best]][0]].short} (${Math.round(perPos[best] * 100)}%).` : "";
+  $("listEmpty").hidden = n > 0;
+  $("listFoot").hidden = n === 0;
+  $("landBar").hidden = $("landKey").hidden = n === 0;
+
+  // Outcome bar: every choice gets its slice; what's left is "no seat".
+  $("landBar").innerHTML = perPos.map((p, k) => `<div style="width:${(p * 100).toFixed(2)}%;background:${colourAt(k)}" title="#${k + 1}: ${Math.round(p * 100)}%"></div>`).join("");
+  const none = Math.max(0, 1 - any);
+  $("landKey").innerHTML = perPos.map((p, k) => `<span class="flex items-center gap-1.5"><i class="inline-block h-2 w-2 rounded-sm" style="background:${colourAt(k)}"></i>#${k + 1} ${Math.round(p * 100)}%</span>`).join("")
+    + (none >= 0.005 ? `<span class="flex items-center gap-1.5"><i class="inline-block h-2 w-2 rounded-sm bg-neutral-600"></i>no seat ${Math.round(none * 100)}%</span>` : "");
+
   $("listRows").innerHTML = LIST.map((s, k) => {
     const seat = DATA.seats[s], inst = DATA.institutes[seat[0]], i = order[k];
     const own = i < 0 ? null : RESULT.sim.p[i];
-    const pct = Math.round(perPos[k] * 100);
+    const p = perPos[k], pct = Math.round(p * 100);
     const prog = DATA.programs[seat[1]].replace(/\s*\(.*?\)\s*$/, "");
-    return `<li class="flex items-center gap-3 px-4 py-2.5">
-      <span class="w-6 shrink-0 font-mono text-[11px] text-neutral-400">${k + 1}.</span>
+    const tierCls = own === null ? "border-rose-200 bg-rose-50 text-rose-600" : own >= 0.7 ? "border-emerald-200 bg-emerald-50 text-emerald-700" : own >= 0.3 ? "border-amber-200 bg-amber-50 text-amber-700" : "border-rose-200 bg-rose-50 text-rose-600";
+    const tierTxt = own === null ? "not eligible" : own >= 0.7 ? "safe" : own >= 0.3 ? "likely" : "reach";
+    const shadowed = own !== null && own >= 0.3 && p < 0.05 && k > 0;
+    return `<li class="group flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-neutral-50">
+      <span class="grid h-8 w-8 shrink-0 place-items-center rounded-md font-mono text-[12px]" style="background:${colourAt(k)};color:${k >= 3 ? "#fff" : "#171717"}">${k + 1}</span>
       <div class="min-w-0 flex-1">
-        <p class="truncate text-[13px] font-semibold text-neutral-900">${inst.short} <span class="font-normal text-neutral-600">· ${prog}</span></p>
-        <p class="font-mono text-[10px] text-neutral-400">${DATA.quotas[seat[2]]} · ${DATA.categories[seat[3]]}${DATA.genders[seat[4]].startsWith("Female") ? " · F" : ""} · closing ${fmt(seat[5])}${own === null ? " · <span class=\"text-rose-500\">not eligible with these inputs</span>" : ` · alone ${Math.round(own * 100)}%`}</p>
+        <p class="truncate text-[14px] font-semibold text-neutral-900">${inst.short} <span class="font-normal text-neutral-500">· ${prog}</span></p>
+        <p class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[10px] text-neutral-400">
+          <span>${DATA.quotas[seat[2]]} · ${DATA.categories[seat[3]]}${DATA.genders[seat[4]].startsWith("Female") ? " · F" : ""}</span><span>closing ${fmt(seat[5])}</span>
+          <span class="rounded-full border ${tierCls} px-1.5 py-px text-[9px] uppercase tracking-[0.06em]">${tierTxt}${own === null ? "" : " · " + Math.round(own * 100) + "% alone"}</span>
+          ${shadowed ? `<span class="text-neutral-500">— a higher choice takes you first</span>` : ""}
+        </p>
       </div>
-      <div class="w-24 shrink-0 text-right">
-        <p class="font-mono text-[13px] text-neutral-900" style="font-variant-numeric:tabular-nums">${pct}%</p>
-        <p class="font-mono text-[9px] uppercase tracking-[0.08em] text-neutral-400">at this position</p>
-        <div class="mt-1 h-1 w-full overflow-hidden rounded-full bg-neutral-100"><div class="bar h-full rounded-full bg-neutral-800" style="width:${Math.max(2, pct)}%"></div></div>
+      <div class="w-28 shrink-0 text-right">
+        <p class="font-serif text-[22px] leading-none text-neutral-900" style="font-variant-numeric:tabular-nums">${pct}%</p>
+        <p class="font-mono text-[9px] uppercase tracking-[0.08em] text-neutral-400">you land here</p>
+        <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-neutral-100"><div class="bar h-full rounded-full" style="width:${Math.max(2, pct)}%;background:${colourAt(k)}"></div></div>
       </div>
-      <div class="flex shrink-0 gap-1">
+      <div class="flex shrink-0 gap-1 opacity-60 transition-opacity group-hover:opacity-100">
         <button type="button" class="mv" data-move="${k}:-1" ${k === 0 ? "disabled" : ""} title="move up">↑</button>
-        <button type="button" class="mv" data-move="${k}:1" ${k === LIST.length - 1 ? "disabled" : ""} title="move down">↓</button>
+        <button type="button" class="mv" data-move="${k}:1" ${k === n - 1 ? "disabled" : ""} title="move down">↓</button>
         <button type="button" class="mv" data-remove="${k}" title="remove">✕</button>
       </div>
     </li>`;
@@ -422,6 +463,12 @@ $("listRows").addEventListener("click", e => {
   const moved = DATA.seats[LIST[j]], other = DATA.seats[LIST[k]];
   const pc = x => Math.round(x * 100) + "%";
   toast(`${DATA.institutes[moved[0]].short} → #${j + 1}: ${pc(before[k])} → ${pc(after[j])}. ${DATA.institutes[other[0]].short}: ${pc(before[j])} → ${pc(after[k])}.`);
+});
+$("listShare").addEventListener("click", async () => {
+  const q = new URLSearchParams(new FormData($("f"))); q.set("list", LIST.join(","));
+  const url = location.origin + location.pathname + "?" + q.toString();
+  try { await navigator.clipboard.writeText(url); toast("Link copied — it opens with your inputs and list."); }
+  catch (_) { prompt("Copy your link:", url); }
 });
 $("listCopy").addEventListener("click", async () => {
   if (!LIST.length) return;
