@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>jeeneetrank — simulate your JEE / NEET counselling, not just predict it</title>
+<meta name="description" content="Your rank is fixed; your choice list isn't. jeeneetrank simulates the actual JoSAA, CSAB and MCC seat allotment on your preference order and stays with you through every round.">
+<meta name="theme-color" content="#171717">
+<link rel="canonical" href="https://jeeneetrank.com/">
+<meta property="og:title" content="jeeneetrank — your rank is fixed. Your choice list isn't.">
+<meta property="og:description" content="We simulate the real seat allotment on your preference order, and stay with you through every counselling round until you're seated.">
+<meta property="og:url" content="https://jeeneetrank.com/">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://jeeneetrank.com/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        serif: ['"Instrument Serif"','ui-serif','Georgia','serif'],
+        sans:  ['Geist','ui-sans-serif','system-ui','sans-serif'],
+        mono:  ['"Geist Mono"','ui-monospace','SFMono-Regular','Menlo','monospace'],
+      },
+      borderRadius: { sm:'6px', md:'8px', lg:'16px' },
+      maxWidth: { content:'1140px' },
+      transitionTimingFunction: { smooth:'cubic-bezier(0.22,1,0.36,1)' },
+    }
+  }
+}
+</script>
+<style>
+/* Paper-and-ink system: one committed light stage, painted explicitly. */
+:root{color-scheme:light}
+html{scroll-behavior:smooth}
+body{margin:0;background:#ffffff;color:#171717;font-family:Geist,ui-sans-serif,system-ui,sans-serif;letter-spacing:-0.025em;-webkit-font-smoothing:antialiased}
+img{max-width:100%}
+[hidden]{display:none!important}
+.font-serif{letter-spacing:normal}
+:focus-visible{outline:2px solid #171717;outline-offset:2px;border-radius:6px}
+input:focus,select:focus{outline:none;box-shadow:none;border-color:#171717}
+.bar{transition:width .5s cubic-bezier(0.22,1,0.36,1)}
+details>summary{list-style:none;cursor:pointer}
+details>summary::-webkit-details-marker{display:none}
+details[open] .chev{transform:rotate(180deg)}
+.chev{transition:transform .2s}
+
+/* Background pattern: graph paper */
+.osui-graph-paper{
+  background-color:#fff;
+  background-image:
+    linear-gradient(#e5e5e5 1px,transparent 1px),
+    linear-gradient(90deg,#e5e5e5 1px,transparent 1px),
+    linear-gradient(#f5f5f5 1px,transparent 1px),
+    linear-gradient(90deg,#f5f5f5 1px,transparent 1px);
+  background-size:100px 100px,100px 100px,20px 20px,20px 20px;
+  -webkit-mask-image:radial-gradient(ellipse 85% 70% at 50% 0%,#000 12%,transparent 76%);
+  mask-image:radial-gradient(ellipse 85% 70% at 50% 0%,#000 12%,transparent 76%);
+}
+/* Background pattern: dot grid */
+.osui-dot-grid{
+  background-color:#fafafa;
+  background-image:radial-gradient(#d4d4d4 1.1px,transparent 1.1px);
+  background-size:22px 22px;
+}
+/* Terminal log — blinking cursor */
+.caret{display:inline-block;width:7px;height:14px;background:#4ade80;vertical-align:-2px;animation:blink 1.05s steps(2,start) infinite}
+@keyframes blink{to{visibility:hidden}}
+/* soft cyan annotation — the one craft moment */
+.annot{background-image:linear-gradient(#a5f3fc,#a5f3fc);background-repeat:no-repeat;background-size:100% 0.34em;background-position:0 88%}
+.fade{opacity:0;transition:opacity .45s cubic-bezier(0.22,1,0.36,1)}
+.fade.on{opacity:1}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<!-- ═════ NAV ═════ -->
+<header class="sticky top-0 z-50 border-b border-neutral-100 bg-white">
+  <div class="mx-auto flex max-w-content items-center gap-6 px-5 py-3">
+    <a href="#top" class="flex items-center gap-2 font-serif text-[19px] text-neutral-900">
+      <span class="grid h-7 w-7 place-items-center rounded-sm bg-neutral-800 font-mono text-[11px] text-white">jn</span>
+      jeeneetrank<span class="text-neutral-400">.com</span>
+    </a>
+    <nav class="ml-auto hidden items-center gap-7 text-[13px] text-neutral-500 md:flex">
+      <a href="#problem" class="transition-colors hover:text-neutral-900">Why</a>
+      <a href="#simulator" class="transition-colors hover:text-neutral-900">Simulator</a>
+      <a href="#rounds" class="transition-colors hover:text-neutral-900">Round alerts</a>
+      <a href="#pricing" class="transition-colors hover:text-neutral-900">Pricing</a>
+    </nav>
+    <a href="#predictor" class="rounded-sm bg-neutral-800 px-4 py-2 text-[14px] text-white transition-colors duration-500 ease-smooth hover:bg-neutral-900">Predict free</a>
+  </div>
+</header>
+
+<main id="top">
+
+<!-- ═════ HERO ═════ -->
+<section class="relative overflow-hidden border-b border-neutral-100">
+  <div class="pointer-events-none absolute inset-0 osui-graph-paper"></div>
+  <div class="relative mx-auto max-w-content px-5 py-16 md:py-20">
+
+    <div class="mx-auto max-w-2xl text-center">
+      <p class="mb-6 inline-block rounded-full border border-neutral-200 bg-white px-3 py-1 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-500">
+        JoSAA · CSAB · MCC · State counselling
+      </p>
+      <h1 class="font-serif text-[clamp(2.6rem,7vw,4.5rem)] leading-[1.08] text-neutral-900">
+        Your rank is fixed.<br>Your <span class="annot">choice list</span> isn't.
+      </h1>
+      <p class="mx-auto mt-6 max-w-xl text-[16px] leading-relaxed text-neutral-700">
+        Two students with the same rank end up in very different colleges — because of how they ordered their preferences. Every other predictor hands you a list. We simulate the actual seat allotment on <em>your</em> order, and stay with you through every round until you're seated.
+      </p>
+      <div class="mt-8 flex flex-col items-center gap-3 md:flex-row md:justify-center">
+        <a href="#predictor" class="w-full rounded-sm bg-neutral-800 px-5 py-2.5 text-center text-[15px] text-white shadow-xl shadow-neutral-300/50 transition-colors duration-500 ease-smooth hover:bg-neutral-900 md:w-auto">Check your chances — free</a>
+        <a href="#simulator" class="w-full rounded-sm border border-neutral-800 bg-white px-5 py-2.5 text-center text-[15px] text-neutral-800 transition-colors duration-500 ease-smooth hover:bg-neutral-50 md:w-auto">See the simulator</a>
+      </div>
+      <p class="mt-6 text-[13px] text-neutral-500">We never sell your phone number to colleges.</p>
+    </div>
+
+    <!-- Browser mockup: the predictor -->
+    <div id="predictor" class="mx-auto mt-14 max-w-3xl overflow-hidden rounded-lg border border-neutral-200 bg-white">
+      <div class="flex items-center gap-3 border-b border-neutral-200 bg-neutral-50 px-4 py-2.5">
+        <div class="flex gap-1.5">
+          <span class="h-3 w-3 rounded-full bg-[#ff5f57]"></span>
+          <span class="h-3 w-3 rounded-full bg-[#febc2e]"></span>
+          <span class="h-3 w-3 rounded-full bg-[#28c840]"></span>
+        </div>
+        <p class="mx-auto rounded-sm border border-neutral-200 bg-white px-4 py-1 font-mono text-[10px] text-neutral-400">jeeneetrank.com/predict</p>
+      </div>
+
+      <div class="grid md:grid-cols-[236px_1fr]">
+        <!-- controls -->
+        <div class="border-b border-neutral-100 p-4 md:border-b-0 md:border-r">
+          <div class="relative mb-4 flex rounded-md bg-neutral-100 p-1 font-mono text-[11px]">
+            <span id="segPill" class="absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-sm bg-white transition-transform duration-500 ease-smooth"></span>
+            <button data-exam="jee"  class="exam-btn relative z-10 flex-1 py-1.5 transition-colors">JEE</button>
+            <button data-exam="neet" class="exam-btn relative z-10 flex-1 py-1.5 transition-colors">NEET</button>
+          </div>
+
+          <label class="mb-3 block">
+            <span id="rankLabel" class="mb-1.5 block text-[13px] font-medium text-neutral-900">All-India rank</span>
+            <input id="rank" type="number" value="18500" min="1" step="100"
+              class="h-10 w-full rounded-md border border-neutral-200 bg-white px-3.5 font-mono text-[13px] text-neutral-900">
+          </label>
+          <label class="mb-4 block">
+            <span class="mb-1.5 block text-[13px] font-medium text-neutral-900">Category</span>
+            <select id="cat" class="h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-[13px] text-neutral-900">
+              <option value="1">General</option><option value="0.62">EWS</option>
+              <option value="0.45">OBC-NCL</option><option value="0.19">SC</option><option value="0.09">ST</option>
+            </select>
+          </label>
+
+          <div class="flex items-center gap-3 rounded-md border border-neutral-100 bg-neutral-50 p-3">
+            <svg viewBox="0 0 44 44" class="h-12 w-12 -rotate-90">
+              <circle cx="22" cy="22" r="18" fill="none" stroke="#e5e5e5" stroke-width="4"/>
+              <circle id="ring" cx="22" cy="22" r="18" fill="none" stroke="#171717" stroke-width="4"
+                      stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="30"
+                      style="transition:stroke-dashoffset .6s cubic-bezier(0.22,1,0.36,1)"/>
+            </svg>
+            <div>
+              <p class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">Any seat</p>
+              <p id="anySeat" class="font-serif text-[26px] leading-none text-neutral-900">—</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- results -->
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[420px] text-left">
+            <thead>
+              <tr class="border-b border-neutral-100 bg-neutral-50">
+                <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400">College</th>
+                <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400">Closing rank</th>
+                <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400">Chance</th>
+              </tr>
+            </thead>
+            <tbody id="results" class="divide-y divide-neutral-100"></tbody>
+          </table>
+          <p class="border-t border-neutral-100 px-4 py-3 font-mono text-[10px] leading-relaxed text-neutral-400">
+            Sample data — six seats from 2025 public closing ranks. The live product simulates the full seat matrix across every round.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════ PROBLEM ═════ -->
+<section id="problem" class="border-b border-neutral-100">
+  <div class="mx-auto max-w-content px-5 py-16 md:py-20">
+    <p class="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-400">The problem with predictors</p>
+    <h2 class="max-w-[20ch] font-serif text-[clamp(1.9rem,4vw,2.8rem)] leading-[1.2] text-neutral-900">A lookup table can't answer the question you're actually asking</h2>
+    <p class="mt-4 max-w-xl text-[16px] leading-relaxed text-neutral-700">Every free predictor in the market runs the same query: compare your rank to last year's closing rank, print a list. That was never the hard part.</p>
+
+    <div class="mt-10 grid gap-4 md:grid-cols-3">
+      <article class="rounded-lg border border-neutral-100 p-4">
+        <p class="mb-3 font-mono text-[10px] uppercase tracking-[0.12em] text-neutral-400">01</p>
+        <h3 class="mb-2 text-[14px] font-semibold text-neutral-900">A list isn't an order</h3>
+        <p class="text-[15px] leading-relaxed text-neutral-700">You submit 100–300 preferences in sequence. An alphabetised set of eligible colleges leaves the entire decision — what goes at #1 versus #40 — still on you.</p>
+      </article>
+      <article class="rounded-lg border border-neutral-100 p-4">
+        <p class="mb-3 font-mono text-[10px] uppercase tracking-[0.12em] text-neutral-400">02</p>
+        <h3 class="mb-2 text-[14px] font-semibold text-neutral-900">"High chance" is not a number</h3>
+        <p class="text-[15px] leading-relaxed text-neutral-700">A colour-coded chip is a threshold on a spreadsheet column. It can't tell you the odds at preference #12 — and certainly not what changes if you swap #12 and #13.</p>
+      </article>
+      <article class="rounded-lg border border-neutral-100 p-4">
+        <p class="mb-3 font-mono text-[10px] uppercase tracking-[0.12em] text-neutral-400">03</p>
+        <h3 class="mb-2 text-[14px] font-semibold text-neutral-900">It forgets you immediately</h3>
+        <p class="text-[15px] leading-relaxed text-neutral-700">Counselling runs six weeks and five-plus rounds. Freeze, float, slide, withdraw, mop-up, stray vacancy — each with a deadline and a forfeited deposit. Every tool is one page visit.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ═════ SIMULATOR ═════ -->
+<section id="simulator" class="border-b border-neutral-100 osui-dot-grid">
+  <div class="mx-auto grid max-w-content gap-10 px-5 py-16 md:grid-cols-2 md:items-center md:py-20">
+    <div>
+      <p class="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-400">How it works</p>
+      <h2 class="font-serif text-[clamp(1.9rem,4vw,2.8rem)] leading-[1.2] text-neutral-900">We run the allotment, not a spreadsheet</h2>
+      <p class="mt-4 max-w-xl text-[16px] leading-relaxed text-neutral-700">We execute the real seat-allocation algorithm against the real seat matrix, ten thousand times, across a distribution of how ranks move year to year. You get a probability at every position in your list — and you can watch it move as you reorder.</p>
+      <dl class="mt-7 grid grid-cols-3 gap-px overflow-hidden rounded-lg border border-neutral-200 bg-neutral-200">
+        <div class="bg-white p-4"><dt class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">Seats modelled</dt><dd class="mt-1 font-serif text-[26px] leading-none text-neutral-900">61,400</dd></div>
+        <div class="bg-white p-4"><dt class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">Years of data</dt><dd class="mt-1 font-serif text-[26px] leading-none text-neutral-900">2018–25</dd></div>
+        <div class="bg-white p-4"><dt class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">Runs per list</dt><dd class="mt-1 font-serif text-[26px] leading-none text-neutral-900">10,000</dd></div>
+      </dl>
+    </div>
+
+    <div class="overflow-hidden rounded-lg border border-neutral-800 bg-[#171717]">
+      <div class="flex items-center gap-3 border-b border-neutral-800 px-4 py-2.5">
+        <div class="flex gap-1.5">
+          <span class="h-2.5 w-2.5 rounded-full bg-[#ff5f57]"></span>
+          <span class="h-2.5 w-2.5 rounded-full bg-[#febc2e]"></span>
+          <span class="h-2.5 w-2.5 rounded-full bg-[#28c840]"></span>
+        </div>
+        <p class="font-mono text-[10px] text-neutral-500">simulate — choice-list-v3</p>
+      </div>
+      <pre class="overflow-x-auto p-4 font-mono text-[11.5px] leading-[1.9] text-neutral-300"><span class="text-emerald-400">$</span> jnr simulate --list my-choices.json --runs 10000
+<span class="text-neutral-500">→</span> loading seat matrix ....... <span class="text-emerald-400">61,400 seats</span>
+<span class="text-neutral-500">→</span> rank drift model .......... <span class="text-emerald-400">2018–2025</span>
+<span class="text-neutral-500">→</span> quota: home-state Bihar ... <span class="text-emerald-400">ok</span>
+
+  #01  CSE, NIT Warangal ......... <span class="text-rose-400">6%</span>
+  #02  ECE, NIT Warangal ........ <span class="text-amber-400">38%</span>
+  #03  CSE, NIT Trichy ........... <span class="text-rose-400">9%</span>
+  #04  Mech, NIT Surathkal ...... <span class="text-emerald-400">41%</span>
+
+<span class="text-neutral-500">→</span> P(any seat) ............... <span class="text-emerald-400">88.3%</span>
+<span class="text-neutral-500">→</span> swap #02 ↔ #03 ............ <span class="text-rose-400">−4.1%</span>
+<span class="text-emerald-400">$</span> <span class="caret"></span></pre>
+      <div class="flex items-center justify-between border-t border-neutral-800 px-4 py-2">
+        <p class="font-mono text-[10px] text-neutral-500">10,000 runs · 1.8s</p>
+        <p class="font-mono text-[10px] text-emerald-400">● complete</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════ SWAP IMPACT ═════ -->
+<section class="border-b border-neutral-100">
+  <div class="mx-auto max-w-content px-5 py-16 md:py-20">
+    <p class="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-400">Swap impact</p>
+    <h2 class="max-w-[24ch] font-serif text-[clamp(1.9rem,4vw,2.8rem)] leading-[1.2] text-neutral-900">See exactly what moving one choice costs you</h2>
+    <p class="mt-4 max-w-xl text-[16px] leading-relaxed text-neutral-700">This is the question every student asks during choice filling, and the one no other tool can answer.</p>
+
+    <div class="mt-9 overflow-hidden rounded-lg border border-neutral-200">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 bg-neutral-50 px-4 py-3">
+        <p class="text-[14px] font-semibold text-neutral-900">Moving CSE Trichy above ECE Warangal</p>
+        <span class="rounded-full border border-rose-200 bg-rose-50 px-2.5 py-0.5 font-mono text-[10px] text-rose-600">Net −4.1% chance of any seat</span>
+      </div>
+      <div class="grid gap-px bg-neutral-100 md:grid-cols-2">
+        <div class="bg-white p-4">
+          <p class="mb-4 font-mono text-[10px] uppercase tracking-[0.11em] text-neutral-400">Before</p>
+          <div class="space-y-3" id="beforeList"></div>
+        </div>
+        <div class="bg-white p-4">
+          <p class="mb-4 font-mono text-[10px] uppercase tracking-[0.11em] text-neutral-400">After</p>
+          <div class="space-y-3" id="afterList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════ ROUNDS ═════ -->
+<section id="rounds" class="border-b border-neutral-100">
+  <div class="mx-auto grid max-w-content items-center gap-12 px-5 py-16 md:grid-cols-[1fr_300px] md:py-20">
+    <div>
+      <p class="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-400">Round-by-round</p>
+      <h2 class="font-serif text-[clamp(1.9rem,4vw,2.8rem)] leading-[1.2] text-neutral-900">The six weeks after choice filling are where seats are lost</h2>
+      <p class="mt-4 max-w-xl text-[16px] leading-relaxed text-neutral-700">An allotment arrives and you have roughly 36 hours to decide something irreversible. Freeze and you're done. Float and you might trade up — or lose what you have. Miss the reporting window and you forfeit the seat and the deposit.</p>
+      <p class="mt-4 max-w-xl text-[16px] leading-relaxed text-neutral-700">We tell you what each option is worth before the clock runs out, and we put fees, hostel cost and service-bond liability in the same view — because those are part of the decision too.</p>
+
+      <ul class="mt-8 space-y-3">
+        <li class="flex gap-3 rounded-lg border border-neutral-100 p-4">
+          <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-500"></span>
+          <div><p class="text-[14px] font-semibold text-neutral-900">Round 1 — NIT Bhopal, Mechanical</p>
+          <p class="mt-1 text-[15px] leading-relaxed text-neutral-700">Floating gives you a <span class="font-mono text-[13px] text-neutral-900">31%</span> shot at your top three with no downside — your seat is held. <span class="font-semibold text-emerald-700">Float.</span></p></div>
+        </li>
+        <li class="flex gap-3 rounded-lg border border-neutral-100 p-4">
+          <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-amber-500"></span>
+          <div><p class="text-[14px] font-semibold text-neutral-900">Document check — EWS certificate</p>
+          <p class="mt-1 text-[15px] leading-relaxed text-neutral-700">Yours is dated FY 2024–25; this counselling needs the current year in the central format. <span class="font-semibold text-amber-700">Re-issue before Round 2.</span></p></div>
+        </li>
+        <li class="flex gap-3 rounded-lg border border-neutral-100 p-4">
+          <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-rose-500"></span>
+          <div><p class="text-[14px] font-semibold text-neutral-900">Cost check — private seat at #24</p>
+          <p class="mt-1 text-[15px] leading-relaxed text-neutral-700">Total outlay <span class="font-mono text-[13px] text-neutral-900">₹68L</span> over 4.5 years before hostel, plus a two-year state bond. <span class="font-semibold text-rose-600">Confirm this is intended.</span></p></div>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Phone mockup with notifications -->
+    <div class="mx-auto w-[286px] max-w-full">
+      <div class="rounded-[42px] border-[3px] border-neutral-300 bg-neutral-900 p-2">
+        <div class="relative overflow-hidden rounded-[34px] bg-neutral-950 px-3.5 pb-5 pt-11">
+          <div class="absolute left-1/2 top-2.5 h-[26px] w-[88px] -translate-x-1/2 rounded-full bg-black"></div>
+          <p class="text-center text-[12px] text-neutral-400">Tuesday, 16 June</p>
+          <p class="mb-6 text-center font-serif text-[62px] leading-none text-white" style="font-variant-numeric:tabular-nums">16:42</p>
+
+          <div class="space-y-2">
+            <div class="rounded-2xl bg-neutral-800 p-3">
+              <div class="mb-1.5 flex items-center gap-2">
+                <span class="grid h-4 w-4 place-items-center rounded-[5px] bg-white font-mono text-[7px] text-neutral-900">jn</span>
+                <p class="font-mono text-[8.5px] uppercase tracking-[0.1em] text-neutral-400">jeeneetrank</p>
+                <p class="ml-auto font-mono text-[8.5px] text-neutral-500">now</p>
+              </div>
+              <p class="text-[12px] font-semibold leading-snug text-white">Round 2 allotment is out</p>
+              <p class="mt-0.5 text-[11.5px] leading-snug text-neutral-300">ECE, NIT Warangal. Our call: <b class="text-white">Freeze</b> — floating leaves you here anyway 91% of the time.</p>
+            </div>
+
+            <div class="rounded-2xl bg-neutral-800 p-3">
+              <div class="mb-1.5 flex items-center gap-2">
+                <span class="grid h-4 w-4 place-items-center rounded-[5px] bg-white font-mono text-[7px] text-neutral-900">jn</span>
+                <p class="font-mono text-[8.5px] uppercase tracking-[0.1em] text-neutral-400">jeeneetrank</p>
+                <p class="ml-auto font-mono text-[8.5px] text-neutral-500">2h</p>
+              </div>
+              <p class="text-[12px] font-semibold leading-snug text-white">Reporting closes in 19 hours</p>
+              <p class="mt-0.5 text-[11.5px] leading-snug text-neutral-300">Fee payment and document upload both pending. Miss it and the seat and deposit are gone.</p>
+            </div>
+
+            <div class="rounded-2xl bg-neutral-800/70 p-3">
+              <div class="mb-1.5 flex items-center gap-2">
+                <span class="grid h-4 w-4 place-items-center rounded-[5px] bg-white font-mono text-[7px] text-neutral-900">jn</span>
+                <p class="font-mono text-[8.5px] uppercase tracking-[0.1em] text-neutral-400">jeeneetrank</p>
+                <p class="ml-auto font-mono text-[8.5px] text-neutral-500">Yesterday</p>
+              </div>
+              <p class="text-[12px] font-semibold leading-snug text-white">CSAB special round opens Friday</p>
+              <p class="mt-0.5 text-[11.5px] leading-snug text-neutral-300">Worth registering — 4 seats above your current one open up on last year's pattern.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="mt-4 text-center font-mono text-[10px] leading-relaxed text-neutral-400">Alerts on WhatsApp and push,<br>timed to your counselling body's calendar.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═════ TESTIMONIALS ═════ -->
+<section class="border-b border-neutral-100 osui-dot-grid">
+  <div class="mx-auto max-w-content px-5 py-16 md:py-20">
+    <div class="mx-auto max-w-2xl text-center">
+      <p class="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-400">From last season</p>
+      <h2 class="font-serif text-[clamp(1.9rem,4vw,2.8rem)] leading-[1.2] text-neutral-900">Students who stopped guessing</h2>
+    </div>
+
+    <figure class="mx-auto mt-10 max-w-2xl rounded-2xl border border-neutral-200 bg-white p-4 text-center md:p-8">
+      <div id="stars" class="mb-5 flex justify-center gap-1"></div>
+      <blockquote id="tQuote" class="fade on font-serif text-[clamp(1.15rem,2.4vw,1.6rem)] leading-[1.4] text-neutral-900"></blockquote>
+      <figcaption id="tWho" class="fade on mt-6 flex items-center justify-center gap-3">
+        <span id="tAv" class="grid h-10 w-10 place-items-center rounded-full bg-neutral-100 font-mono text-[12px] text-neutral-700"></span>
+        <div class="text-left">
+          <p id="tName" class="text-[14px] font-semibold text-neutral-900"></p>
+          <p id="tRole" class="font-mono text-[10px] text-neutral-400"></p>
+        </div>
+      </figcaption>
+      <div id="dots" class="mt-7 flex justify-center gap-2"></div>
+    </figure>
+    <p class="mt-5 text-center font-mono text-[10px] text-neutral-400">Illustrative — replace with real quotes before launch.</p>
+  </div>
+</section>
+
+<!-- ═════ PRICING ═════ -->
+<section id="pricing" class="border-b border-neutral-100">
+  <div class="mx-auto max-w-content px-5 py-16 md:py-20">
+    <div class="mx-auto max-w-2xl text-center">
+      <p class="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-400">Pricing</p>
+      <h2 class="font-serif text-[clamp(1.9rem,4vw,2.8rem)] leading-[1.2] text-neutral-900">One price, one season, no upsells</h2>
+      <p class="mx-auto mt-4 max-w-xl text-[16px] leading-relaxed text-neutral-700">Free tools are free because you are the product. We'd rather you paid us.</p>
+
+      <div class="relative mt-7 inline-flex rounded-md bg-neutral-100 p-1 text-[13px]">
+        <span id="planPill" class="absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-sm bg-white transition-transform duration-500 ease-smooth"></span>
+        <button data-plan="jee"  class="plan-btn relative z-10 px-5 py-1.5 transition-colors">Engineering</button>
+        <button data-plan="neet" class="plan-btn relative z-10 px-5 py-1.5 transition-colors">Medical</button>
+      </div>
+    </div>
+
+    <div class="mx-auto mt-10 grid max-w-3xl gap-4 md:grid-cols-2 md:items-start">
+      <div class="rounded-lg border border-neutral-200 p-4 md:p-6">
+        <p class="text-[14px] font-semibold text-neutral-500">Free</p>
+        <p class="mt-3 font-serif text-[44px] leading-none text-neutral-900">₹0</p>
+        <p class="mt-2 text-[14px] text-neutral-500">Better than every paid predictor we tested.</p>
+        <ul class="mt-6 space-y-2.5 text-[15px] text-neutral-700">
+          <li class="flex gap-2.5"><span class="text-neutral-900">✓</span> Rank → probability for every eligible seat</li>
+          <li class="flex gap-2.5"><span class="text-neutral-900">✓</span> The reasoning behind each number, shown</li>
+          <li class="flex gap-2.5"><span class="text-neutral-900">✓</span> Cutoff history, 2018 onward</li>
+          <li class="flex gap-2.5"><span class="text-neutral-900">✓</span> <span id="freeExtra">Fee and placement details on every college</span></li>
+        </ul>
+        <a href="#predictor" class="mt-7 block rounded-sm border border-neutral-800 px-4 py-2 text-center text-[15px] text-neutral-800 transition-colors duration-500 ease-smooth hover:bg-neutral-50">Start now</a>
+      </div>
+
+      <div class="rounded-lg border border-neutral-900 p-4 md:p-6">
+        <div class="flex items-center justify-between">
+          <p class="text-[14px] font-semibold text-neutral-900">Season Pass</p>
+          <span class="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-0.5 font-mono text-[10px] text-neutral-500">Until you're seated</span>
+        </div>
+        <p class="mt-3 flex items-baseline gap-2 font-serif text-[44px] leading-none text-neutral-900"><span id="price">₹499</span> <span class="font-sans text-[14px] font-normal text-neutral-400">one-time</span></p>
+        <p id="planNote" class="mt-2 text-[14px] text-neutral-500">Covers the whole JoSAA + CSAB cycle. Not a subscription.</p>
+        <ul class="mt-6 space-y-2.5 text-[15px] text-neutral-700">
+          <li class="flex gap-2.5"><span class="text-neutral-900">✓</span> Choice-order builder with per-position odds</li>
+          <li class="flex gap-2.5"><span class="text-neutral-900">✓</span> Swap-impact analysis and saved scenarios</li>
+          <li class="flex gap-2.5"><span class="text-neutral-900">✓</span> <span id="paidRounds">Round-by-round freeze / float / slide calls</span></li>
+          <li class="flex gap-2.5"><span class="text-neutral-900">✓</span> Deadline alerts on WhatsApp</li>
+          <li class="flex gap-2.5"><span class="text-neutral-900">✓</span> Document and eligibility pre-flight</li>
+        </ul>
+        <a href="#waitlist" class="mt-7 block rounded-sm bg-neutral-800 px-4 py-2 text-center text-[15px] text-white transition-colors duration-500 ease-smooth hover:bg-neutral-900">Get the Season Pass</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════ FAQ ═════ -->
+<section class="border-b border-neutral-100">
+  <div class="mx-auto max-w-content px-5 py-16 md:py-20">
+    <div class="grid gap-10 md:grid-cols-[280px_1fr]">
+      <div>
+        <p class="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-400">Questions</p>
+        <h2 class="font-serif text-[clamp(1.7rem,3.2vw,2.3rem)] leading-[1.2] text-neutral-900">The ones you should be asking</h2>
+      </div>
+      <div class="divide-y divide-neutral-100 border-y border-neutral-100">
+        <details><summary class="flex items-center justify-between gap-4 py-4 text-[15px] font-semibold text-neutral-900">How accurate is this, really?<svg class="chev h-4 w-4 shrink-0 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+          <p class="pb-4 text-[15px] leading-relaxed text-neutral-700">We publish a calibration scorecard after every season: what we predicted, what happened, where we were wrong. Nobody else in this category will show you their error rate. Ours is on the record.</p></details>
+        <details><summary class="flex items-center justify-between gap-4 py-4 text-[15px] font-semibold text-neutral-900">Where does the data come from?<svg class="chev h-4 w-4 shrink-0 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+          <p class="pb-4 text-[15px] leading-relaxed text-neutral-700">Official published seat matrices and round-wise allotment data from JoSAA, CSAB, MCC and the state counselling bodies. The same public source everyone uses — the difference is entirely in what we do with it.</p></details>
+        <details><summary class="flex items-center justify-between gap-4 py-4 text-[15px] font-semibold text-neutral-900">Will I get calls from colleges?<svg class="chev h-4 w-4 shrink-0 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+          <p class="pb-4 text-[15px] leading-relaxed text-neutral-700">Not from us. We don't sell, share or broker your contact details, and we take no money from any college. That is the whole reason there is a price on this page.</p></details>
+        <details><summary class="flex items-center justify-between gap-4 py-4 text-[15px] font-semibold text-neutral-900">Do you cover state counselling?<svg class="chev h-4 w-4 shrink-0 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+          <p class="pb-4 text-[15px] leading-relaxed text-neutral-700">Central counselling first, done properly. State bodies are added one at a time with their full quota rules modelled — not scraped cutoffs with the reservation logic guessed at. We'd rather cover three states honestly than thirty badly.</p></details>
+        <details><summary class="flex items-center justify-between gap-4 py-4 text-[15px] font-semibold text-neutral-900">Is this the same as a counselling consultant?<svg class="chev h-4 w-4 shrink-0 text-neutral-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+          <p class="pb-4 text-[15px] leading-relaxed text-neutral-700">No. We give you the maths and the deadlines; you submit everything yourself on the official portal. We will never offer to arrange a seat, and you should walk away from anyone who does.</p></details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═════ CTA / WAITLIST ═════ -->
+<section id="waitlist" class="border-b border-neutral-100">
+  <div class="mx-auto max-w-content px-5 py-16 md:py-20">
+    <div class="mx-auto max-w-2xl rounded-2xl border border-neutral-200 p-4 text-center md:p-10">
+      <p class="mb-5 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-400">JoSAA counselling opens in</p>
+      <div id="countdown" class="mx-auto mb-9 flex max-w-sm justify-center gap-3"></div>
+
+      <h2 class="mx-auto max-w-[22ch] font-serif text-[clamp(1.8rem,3.6vw,2.5rem)] leading-[1.2] text-neutral-900">Get the free predictor the day results drop</h2>
+      <p class="mx-auto mt-4 max-w-xl text-[16px] leading-relaxed text-neutral-700">Plus a plain-language walkthrough of your counselling body's rules. Nothing else, and no one else gets your address.</p>
+
+      <form id="nl" class="mx-auto mt-8 flex max-w-md flex-col gap-2.5 md:flex-row">
+        <input type="email" name="email" required placeholder="you@email.com" aria-label="Email address"
+          class="h-10 w-full rounded-md border border-neutral-200 bg-white px-3.5 text-[14px] text-neutral-900">
+        <button class="h-10 shrink-0 rounded-sm bg-neutral-800 px-5 text-[14px] text-white transition-colors duration-500 ease-smooth hover:bg-neutral-900">Notify me</button>
+      </form>
+      <p id="nlMsg" class="mt-3 text-[13px] text-neutral-500" hidden>Done — we'll email you when results are out.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="mx-auto max-w-content px-5 py-10">
+  <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+    <p class="font-serif text-[19px] text-neutral-900">jeeneetrank<span class="text-neutral-400">.com</span></p>
+    <p class="max-w-xl text-[13px] leading-relaxed text-neutral-500">Advisory only. Always verify eligibility, quotas and your final option order on the official JoSAA, CSAB, MCC or state counselling portal before submitting. Not affiliated with NTA, JoSAA, MCC or any college.</p>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
