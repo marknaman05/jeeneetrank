@@ -30,6 +30,11 @@ input:focus,select:focus{outline:none;box-shadow:none;border-color:#171717}
 .chip[aria-pressed="true"]{background:#171717;color:#fff;border-color:#171717}
 .osui-dot-grid{background-color:#fafafa;background-image:radial-gradient(#d4d4d4 1.1px,transparent 1.1px);background-size:22px 22px}
 tbody tr:hover{background:#fafafa}
+button.add[aria-pressed="true"]{background:#171717;color:#fff;border-color:#171717}
+.mv{height:24px;width:24px;border:1px solid #e5e5e5;border-radius:6px;font-size:12px;color:#525252;background:#fff}
+.mv:hover:not(:disabled){border-color:#171717;color:#171717}
+.mv:disabled{opacity:.3}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#171717;color:#fff;font-size:13px;padding:9px 14px;border-radius:999px;box-shadow:0 20px 25px -5px rgba(0,0,0,.2);z-index:60}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -105,11 +110,15 @@ tbody tr:hover{background:#fafafa}
     <!-- ── results ── -->
     <section id="out" hidden>
       <div class="flex flex-wrap items-end justify-between gap-4">
-        <div class="flex flex-wrap gap-2" id="typeChips">
+        <div class="flex flex-wrap items-center gap-2" id="typeChips">
           <button type="button" class="chip" data-type="IIT" aria-pressed="true">IIT</button>
           <button type="button" class="chip" data-type="NIT" aria-pressed="true">NIT</button>
           <button type="button" class="chip" data-type="IIIT" aria-pressed="true">IIIT</button>
           <button type="button" class="chip" data-type="GFTI" aria-pressed="true">GFTI</button>
+          <span class="mx-1 h-4 w-px bg-neutral-200"></span>
+          <button type="button" class="chip" data-tier="reach" aria-pressed="true">Reach</button>
+          <button type="button" class="chip" data-tier="likely" aria-pressed="true">Likely</button>
+          <button type="button" class="chip" data-tier="safe" aria-pressed="true">Safe</button>
         </div>
         <input id="q" type="search" placeholder="Filter: computer, warangal, civil…" class="h-9 w-full rounded-md border border-neutral-200 px-3 text-[13px] md:w-72">
       </div>
@@ -120,6 +129,23 @@ tbody tr:hover{background:#fafafa}
         <div class="bg-white p-4"><p class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">Any seat in this view</p><p id="anySeat" class="mt-1 font-serif text-[28px] leading-none">—</p></div>
       </div>
 
+      <!-- ── choice list ── -->
+      <div id="listPanel" class="mt-4 rounded-lg border border-neutral-900">
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-200 bg-neutral-50 px-4 py-3">
+          <div>
+            <p class="text-[14px] font-semibold text-neutral-900">My choice list <span id="listCount" class="font-mono text-[11px] font-normal text-neutral-500"></span></p>
+            <p class="text-[12px] text-neutral-500">Allotment goes to the <b>first</b> choice that admits you. Order is everything.</p>
+          </div>
+          <div class="flex items-center gap-4">
+            <div class="text-right"><p class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">Any seat from list</p><p id="listAny" class="font-serif text-[26px] leading-none text-neutral-900">—</p></div>
+            <button id="listClear" type="button" class="text-[12px] text-neutral-500 underline-offset-2 hover:underline">Clear</button>
+          </div>
+        </div>
+        <ol id="listRows" class="divide-y divide-neutral-100"></ol>
+        <p id="listEmpty" class="px-4 py-5 text-[13px] text-neutral-500">Add seats with <span class="rounded border border-neutral-300 px-1.5 font-mono text-[11px]">+</span> in the table below, in the order you'd fill them on JoSAA. Every move shows what it costs.</p>
+        <p id="listNote" class="border-t border-neutral-100 px-4 py-2.5 font-mono text-[10px] text-neutral-400" hidden>Saved in this browser. "At this position" = chance this is the seat you're allotted; earlier choices take priority.</p>
+      </div>
+
       <div class="mt-4 overflow-x-auto rounded-lg border border-neutral-200">
         <table class="w-full min-w-[640px] text-left">
           <thead>
@@ -128,6 +154,7 @@ tbody tr:hover{background:#fafafa}
               <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400">Quota · seat</th>
               <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400"><span id="seasonHdr">2025</span> closing</th>
               <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400">Your chance</th>
+              <th class="px-2 py-2.5"></th>
             </tr>
           </thead>
           <tbody id="rows" class="divide-y divide-neutral-100"></tbody>
@@ -167,11 +194,14 @@ $("runs").textContent = fmt(JNR.RUNS);
 let DATA = null, RESULT = null, page = 1;
 const PAGE = 60;
 const types = new Set(["IIT", "NIT", "IIIT", "GFTI"]);
+const tiers = new Set(["reach", "likely", "safe"]);
+const tierOf = p => p >= 0.7 ? "safe" : p >= 0.3 ? "likely" : "reach";
 
 fetch("site-data/josaa.json").then(r => r.json()).then(d => {
   DATA = d;
   for (const id of ["season", "seasonHdr", "seasonFoot"]) $(id).textContent = d.season;
   $("loading").textContent = `${fmt(d.seats.length)} seats · JoSAA ${d.season} final round`;
+  try { LIST = JSON.parse(localStorage.getItem("jnr-list-" + d.season) || "[]"); } catch (_) {}
   fromQuery();
 });
 
@@ -211,10 +241,11 @@ function run() {
   const c = candidate();
   const elig = JNR.eligible(DATA, c);
   const sim = JNR.simulate(DATA, elig);
-  RESULT = { c, elig, sim, order: [...elig.keys()].sort((a, b) => sim.p[b] - sim.p[a] || DATA.seats[elig[a].s][5] - DATA.seats[elig[b].s][5]) };
+  // Most competitive first: that is how students read a college list.
+  RESULT = { c, elig, sim, order: [...elig.keys()].filter(i => sim.p[i] >= 0.01).sort((a, b) => DATA.seats[elig[a].s][5] - DATA.seats[elig[b].s][5]) };
   page = 1;
   $("empty").hidden = true; $("out").hidden = false;
-  draw();
+  draw(); drawList();
 }
 
 const tier = p => p >= 0.7 ? ["Safe", "border-emerald-200 bg-emerald-50 text-emerald-700", "bg-emerald-500"]
@@ -225,7 +256,7 @@ function visible() {
   const q = $("q").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
   return RESULT.order.filter(i => {
     const seat = DATA.seats[RESULT.elig[i].s], inst = DATA.institutes[seat[0]];
-    if (!types.has(inst.type)) return false;
+    if (!types.has(inst.type) || !tiers.has(tierOf(RESULT.sim.p[i]))) return false;
     if (!q.length) return true;
     const hay = (inst.short + " " + inst.name + " " + DATA.programs[seat[1]]).toLowerCase();
     return q.every(w => hay.includes(w));
@@ -253,18 +284,106 @@ function draw() {
       <td class="px-4 py-3">
         <div class="flex items-center gap-2"><span class="w-9 font-mono text-[12px] text-neutral-900" style="font-variant-numeric:tabular-nums">${pct}%</span><span class="rounded-full border ${cls} px-2 py-0.5 font-mono text-[9.5px]">${t}</span></div>
         <div class="mt-2 h-1 w-full overflow-hidden rounded-full bg-neutral-100"><div class="bar h-full rounded-full ${bar}" style="width:${Math.max(2, pct)}%"></div></div>
-      </td></tr>`;
-  }).join("") || `<tr><td colspan="4" class="px-4 py-8 text-center text-[14px] text-neutral-500">No eligible seats match. Check the rank, the home state, and whether IITs need an Advanced rank.</td></tr>`;
-  $("shown").textContent = `showing ${fmt(shown.length)} of ${fmt(vis.length)} · sorted by chance`;
+      </td>
+      <td class="px-2 py-3 text-right"><button type="button" data-add="${elig[i].s}" aria-pressed="${LIST.includes(elig[i].s)}" title="add to my choice list" class="add h-7 w-7 rounded-md border border-neutral-200 font-mono text-[13px] text-neutral-600 transition-colors hover:border-neutral-900 hover:text-neutral-900 aria-pressed:bg-neutral-900">${LIST.includes(elig[i].s) ? "✓" : "+"}</button></td></tr>`;
+  }).join("") || `<tr><td colspan="5" class="px-4 py-8 text-center text-[14px] text-neutral-500">No eligible seats match. Check the rank, the home state, and whether IITs need an Advanced rank.</td></tr>`;
+  $("shown").textContent = `showing ${fmt(shown.length)} of ${fmt(vis.length)} · most competitive first · seats under 1% hidden`;
   $("more").hidden = shown.length >= vis.length;
 }
+
+/* ── choice list ─────────────────────────────────────────────────────── */
+// Seat indices into DATA.seats, in preference order.  Kept in this browser.
+let LIST = [];
+try { LIST = JSON.parse(localStorage.getItem("jnr-list-" + (DATA && DATA.season)) || "[]"); } catch (_) {}
+function saveList() { try { localStorage.setItem("jnr-list-" + DATA.season, JSON.stringify(LIST)); } catch (_) {} }
+
+function toast(text) {
+  let el = $("toast");
+  if (!el) { el = document.createElement("div"); el.id = "toast"; document.body.appendChild(el); }
+  el.textContent = text; el.hidden = false;
+  clearTimeout(el.timer); el.timer = setTimeout(() => { el.hidden = true; }, 4500);
+}
+
+// The list as indices into RESULT.elig (a seat the candidate is no longer
+// eligible for, after a change of inputs, is shown but scored as 0).
+function listOrder() {
+  const bySeat = new Map(RESULT.elig.map((e, i) => [e.s, i]));
+  return LIST.map(s => bySeat.has(s) ? bySeat.get(s) : -1);
+}
+function scoreList(order) {
+  const valid = order.map(i => (i < 0 ? null : i));
+  // simulateList wants real indices; ineligible entries can never hit.
+  const packed = valid.map((i, k) => ({ i, k })).filter(x => x.i !== null);
+  const r = JNR.simulateList(RESULT.sim, packed.map(x => x.i));
+  const perPos = new Array(order.length).fill(0);
+  packed.forEach((x, j) => { perPos[x.k] = r.perPos[j]; });
+  return { perPos, any: r.any };
+}
+
+function drawList() {
+  if (!RESULT) return;
+  const order = listOrder();
+  const { perPos, any } = scoreList(order);
+  $("listCount").textContent = LIST.length ? `· ${LIST.length} choice${LIST.length > 1 ? "s" : ""}` : "";
+  $("listAny").textContent = LIST.length ? Math.round(any * 100) + "%" : "—";
+  $("listEmpty").hidden = LIST.length > 0;
+  $("listNote").hidden = LIST.length === 0;
+  $("listRows").innerHTML = LIST.map((s, k) => {
+    const seat = DATA.seats[s], inst = DATA.institutes[seat[0]], i = order[k];
+    const own = i < 0 ? null : RESULT.sim.p[i];
+    const pct = Math.round(perPos[k] * 100);
+    const prog = DATA.programs[seat[1]].replace(/\s*\(.*?\)\s*$/, "");
+    return `<li class="flex items-center gap-3 px-4 py-2.5">
+      <span class="w-6 shrink-0 font-mono text-[11px] text-neutral-400">${k + 1}.</span>
+      <div class="min-w-0 flex-1">
+        <p class="truncate text-[13px] font-semibold text-neutral-900">${inst.short} <span class="font-normal text-neutral-600">· ${prog}</span></p>
+        <p class="font-mono text-[10px] text-neutral-400">${DATA.quotas[seat[2]]} · ${DATA.categories[seat[3]]}${DATA.genders[seat[4]].startsWith("Female") ? " · F" : ""} · closing ${fmt(seat[5])}${own === null ? " · <span class=\"text-rose-500\">not eligible with these inputs</span>" : ` · alone ${Math.round(own * 100)}%`}</p>
+      </div>
+      <div class="w-24 shrink-0 text-right">
+        <p class="font-mono text-[13px] text-neutral-900" style="font-variant-numeric:tabular-nums">${pct}%</p>
+        <p class="font-mono text-[9px] uppercase tracking-[0.08em] text-neutral-400">at this position</p>
+        <div class="mt-1 h-1 w-full overflow-hidden rounded-full bg-neutral-100"><div class="bar h-full rounded-full bg-neutral-800" style="width:${Math.max(2, pct)}%"></div></div>
+      </div>
+      <div class="flex shrink-0 gap-1">
+        <button type="button" class="mv" data-move="${k}:-1" ${k === 0 ? "disabled" : ""} title="move up">↑</button>
+        <button type="button" class="mv" data-move="${k}:1" ${k === LIST.length - 1 ? "disabled" : ""} title="move down">↓</button>
+        <button type="button" class="mv" data-remove="${k}" title="remove">✕</button>
+      </div>
+    </li>`;
+  }).join("");
+}
+
+function toggleSeat(s) {
+  const at = LIST.indexOf(s);
+  if (at >= 0) LIST.splice(at, 1); else LIST.push(s);
+  saveList(); drawList();
+  document.querySelectorAll(`button.add[data-add="${s}"]`).forEach(b => { const on = LIST.includes(s); b.setAttribute("aria-pressed", on); b.textContent = on ? "✓" : "+"; });
+}
+
+$("rows").addEventListener("click", e => {
+  const b = e.target.closest("button.add"); if (b) toggleSeat(+b.dataset.add);
+});
+$("listRows").addEventListener("click", e => {
+  const mv = e.target.closest("[data-move]"), rm = e.target.closest("[data-remove]");
+  if (rm) { toggleSeat(LIST[+rm.dataset.remove]); return; }
+  if (!mv) return;
+  const [k, d] = mv.dataset.move.split(":").map(Number), j = k + d;
+  const before = scoreList(listOrder()).any;
+  [LIST[k], LIST[j]] = [LIST[j], LIST[k]];
+  saveList(); drawList();
+  const after = scoreList(listOrder()).any, delta = Math.round((after - before) * 100);
+  const seat = DATA.seats[LIST[j]];
+  toast(`${DATA.institutes[seat[0]].short} → #${j + 1}: any-seat ${Math.round(before * 100)}% → ${Math.round(after * 100)}% (${delta > 0 ? "+" : ""}${delta})`);
+});
+$("listClear").addEventListener("click", () => { LIST.forEach(s => document.querySelectorAll(`button.add[data-add="${s}"]`).forEach(b => { b.setAttribute("aria-pressed", false); b.textContent = "+"; })); LIST = []; saveList(); drawList(); });
 
 $("more").addEventListener("click", () => { page++; draw(); });
 $("q").addEventListener("input", () => { page = 1; if (RESULT) draw(); });
 document.querySelectorAll("#typeChips .chip").forEach(b => b.addEventListener("click", () => {
   const on = b.getAttribute("aria-pressed") !== "true";
   b.setAttribute("aria-pressed", on);
-  on ? types.add(b.dataset.type) : types.delete(b.dataset.type);
+  const set = b.dataset.type ? types : tiers, key = b.dataset.type || b.dataset.tier;
+  on ? set.add(key) : set.delete(key);
   page = 1; if (RESULT) draw();
 }));
 </script>
