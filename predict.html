@@ -197,14 +197,14 @@ button.add[aria-pressed="true"]{background:#171717;color:#fff;border-color:#1717
           <thead>
             <tr class="border-b border-neutral-100 bg-neutral-50">
               <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400">Seat</th>
-              <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400">Quota · seat</th>
+              <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400"><abbr title="Quota = who competes for the seat: All India, or an NIT's Home-state / Other-state halves. Seat = its reservation category (OPEN, EWS, OBC-NCL, SC, ST, PwD). Female-only = the supernumerary pool only women see." class="cursor-help underline decoration-dotted underline-offset-2">Quota · seat</abbr></th>
               <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400"><span id="seasonHdr">2025</span> closing</th>
               <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400">Your chance</th>
               <th class="px-2 py-2.5"></th>
             </tr>
             <tr class="border-b border-neutral-200 bg-white">
               <th class="px-3 py-2 font-normal"><input data-col="seat" type="search" placeholder="Search college or branch…" class="colf h-9 w-full rounded-md border border-neutral-200 px-3 text-[13px] font-normal"></th>
-              <th class="px-3 py-2 font-normal"><input data-col="quota" type="search" placeholder="e.g. HS, OBC, F" class="colf h-9 w-full rounded-md border border-neutral-200 px-3 text-[13px] font-normal"></th>
+              <th class="px-3 py-2 font-normal"><input data-col="quota" type="search" placeholder="home, obc, female…" class="colf h-9 w-full rounded-md border border-neutral-200 px-3 text-[13px] font-normal"></th>
               <th class="px-3 py-2 font-normal"><input data-col="closing" type="number" min="1" placeholder="up to…" class="colf h-9 w-full rounded-md border border-neutral-200 px-3 font-mono text-[13px] font-normal"></th>
               <th class="px-3 py-2 font-normal"><input data-col="chance" type="number" min="0" max="100" placeholder="min %" class="colf h-9 w-full rounded-md border border-neutral-200 px-3 font-mono text-[13px] font-normal"></th>
               <th class="px-2 py-2"></th>
@@ -259,6 +259,9 @@ const BRANCHES = [
   ["Chem / Bio / Materials", /chemical|polymer|petroleum|ceramic|metallurg|material|mineral|mining|food|dairy|agricultur|textile|carpet|handloom|fashion|biotech|\bbio/i],
 ];
 const OTHER = "Other";
+// JoSAA's quota codes, in words.
+const QUOTA = { AI: "All India", HS: "Home state", OS: "Other state", GO: "Goa quota", JK: "J&K quota", LA: "Ladakh quota" };
+const quotaLabel = q => QUOTA[q] || q;
 // So "cse", "ece", "eee", "mech", "civil", "it", "aiml" find what students mean.
 const ABBR = p => {
   const out = [];
@@ -354,7 +357,7 @@ function visible() {
     const hay = (inst.short + " " + inst.name + " " + inst.state + " " + inst.type + " " + DATA.programs[seat[1]] + " " + ABBR(DATA.programs[seat[1]])).toLowerCase();
     if (!q.every(w => hay.includes(w)) || !seatQ.every(w => hay.includes(w))) return false;
     if (quotaQ.length) {
-      const qs = (DATA.quotas[seat[2]] + " " + DATA.categories[seat[3]] + " " + (DATA.genders[seat[4]].startsWith("Female") ? "female f" : "neutral")).toLowerCase();
+      const qs = (DATA.quotas[seat[2]] + " " + quotaLabel(DATA.quotas[seat[2]]) + " " + DATA.categories[seat[3]] + " " + (DATA.genders[seat[4]].startsWith("Female") ? "female-only f" : "neutral")).toLowerCase();
       if (!quotaQ.every(w => qs.includes(w))) return false;
     }
     return true;
@@ -378,7 +381,11 @@ function draw() {
     const prog = DATA.programs[seat[1]].replace(/\s*\(.*?\)\s*$/, m => `<span class="text-neutral-400"> ${m.trim()}</span>`);
     return `<tr>
       <td class="px-4 py-3"><p class="text-[14px] font-semibold text-neutral-900">${inst.short}</p><p class="text-[13px] text-neutral-600">${prog}</p></td>
-      <td class="px-4 py-3 font-mono text-[11px] text-neutral-500">${DATA.quotas[seat[2]]} · ${DATA.categories[seat[3]]}${DATA.genders[seat[4]].startsWith("Female") ? " · F" : ""}</td>
+      <td class="px-4 py-3 text-[12px] leading-snug text-neutral-700">
+        <p>${quotaLabel(DATA.quotas[seat[2]])}</p>
+        <p class="text-neutral-500">${DATA.categories[seat[3]]} seat</p>
+        ${DATA.genders[seat[4]].startsWith("Female") ? `<span class="mt-1 inline-block rounded-full border border-fuchsia-200 bg-fuchsia-50 px-1.5 font-mono text-[9.5px] text-fuchsia-700">female-only</span>` : ""}
+      </td>
       <td class="px-4 py-3 font-mono text-[12px] text-neutral-700" style="font-variant-numeric:tabular-nums">${fmt(closing)} ${trend}<br><span class="text-[10px] text-neutral-400">your rank ${fmt(elig[i].rank)}</span></td>
       <td class="px-4 py-3">
         <div class="flex items-center gap-2"><span class="w-9 font-mono text-[12px] text-neutral-900" style="font-variant-numeric:tabular-nums">${pct}%</span><span class="rounded-full border ${cls} px-2 py-0.5 font-mono text-[9.5px]">${t}</span></div>
@@ -456,7 +463,7 @@ function drawList() {
       <div class="min-w-0 flex-1">
         <p class="truncate text-[17px] font-semibold text-neutral-900">${inst.short} <span class="font-normal text-neutral-500">· ${prog}</span></p>
         <p class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[12px] text-neutral-500">
-          <span>${DATA.quotas[seat[2]]} · ${DATA.categories[seat[3]]}${DATA.genders[seat[4]].startsWith("Female") ? " · F" : ""}</span><span>closing ${fmt(seat[5])}</span>
+          <span>${quotaLabel(DATA.quotas[seat[2]])} · ${DATA.categories[seat[3]]}${DATA.genders[seat[4]].startsWith("Female") ? " · female-only" : ""}</span><span>closing ${fmt(seat[5])}</span>
           <span class="rounded-full border ${tierCls} px-2 py-0.5 text-[11px] uppercase tracking-[0.06em]">${tierTxt}${own === null ? "" : " · " + Math.round(own * 100) + "% alone"}</span>
           ${shadowed ? `<span class="text-neutral-500">— a higher choice takes you first</span>` : ""}
         </p>
@@ -513,7 +520,7 @@ $("listCopy").addEventListener("click", async () => {
   const { perPos, any } = scoreList(listOrder());
   const lines = LIST.map((s, k) => {
     const seat = DATA.seats[s];
-    return `${k + 1}. ${DATA.institutes[seat[0]].name} — ${DATA.programs[seat[1]]} [${DATA.quotas[seat[2]]} · ${DATA.categories[seat[3]]} · ${DATA.genders[seat[4]]}] closing ${seat[5]} · ${Math.round(perPos[k] * 100)}% at this position`;
+    return `${k + 1}. ${DATA.institutes[seat[0]].name} — ${DATA.programs[seat[1]]} [${quotaLabel(DATA.quotas[seat[2]])} · ${DATA.categories[seat[3]]} · ${DATA.genders[seat[4]]}] closing ${seat[5]} · ${Math.round(perPos[k] * 100)}% at this position`;
   });
   const text = `My JoSAA choice list (jeeneetrank.com, ${DATA.season} data, rank ${fmt(RESULT.c.mainRank.crl)})\nChance of any seat from this list: ${Math.round(any * 100)}%\n\n${lines.join("\n")}\n`;
   try { await navigator.clipboard.writeText(text); toast("Copied — paste it anywhere."); }
