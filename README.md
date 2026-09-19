@@ -30,3 +30,13 @@ The choice-list builder scores an ordered list by the first seat that admits in 
 ## Chat assistant (`chat.js` + `chat/`)
 
 A floating assistant on the predictor. Each message carries the page state (inputs, top seats with probabilities, borderline seats, the choice list with per-position odds, round-advisor state) to a Cloudflare Worker in `chat/`, which holds the OpenRouter key (DeepSeek model), streams the reply and rate-limits per IP. Replies can end with `SUGGEST: id,…`, rendered as one-click add-to-list chips. Deploy steps in `chat/README.md`; set `CHAT_ENDPOINT` in `chat.js`.
+
+## 1:1 session bookings (`book.html`)
+
+Slots are 45 min, 6–9 pm IST weekdays / 11 am–9 pm weekends, next 14 days. The Worker stores bookings in KV (`BOOKINGS`), prevents double booking and validates the schedule server-side. Read them with:
+
+```
+curl -H "Authorization: Bearer $ADMIN_TOKEN" https://jeeneetrank-chat.marknaman05.workers.dev/bookings
+```
+
+(`ADMIN_TOKEN` is a Worker secret; a copy is in `chat/.dev.vars`, gitignored.) No payment is taken on the page — confirm on WhatsApp and collect via UPI.

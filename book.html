@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Book a 1:1 counselling session — jeeneetrank</title>
+<meta name="description" content="A 45-minute video call about your JoSAA or NEET counselling: your list, your rounds, your documents, your questions.">
+<link rel="canonical" href="https://jeeneetrank.com/book">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+<style>
+:root{color-scheme:light}
+body{margin:0;background:#fff;color:#171717;font-family:Geist,ui-sans-serif,system-ui,sans-serif;letter-spacing:-0.025em;-webkit-font-smoothing:antialiased}
+.font-serif{letter-spacing:normal}
+:focus-visible{outline:2px solid #171717;outline-offset:2px;border-radius:6px}
+input:focus,select:focus,textarea:focus{outline:none;box-shadow:none;border-color:#171717}
+[hidden]{display:none!important}
+.osui-dot-grid{background-color:#fafafa;background-image:radial-gradient(#d4d4d4 1.1px,transparent 1.1px);background-size:22px 22px}
+.day{border:1px solid #e5e5e5;border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;background:#fff;min-width:64px}
+.day[aria-pressed="true"]{background:#171717;color:#fff;border-color:#171717}
+.day[disabled]{opacity:.35;cursor:default}
+.slot{border:1px solid #e5e5e5;border-radius:8px;padding:10px 0;font-family:"Geist Mono",ui-monospace,monospace;font-size:14px;background:#fff;cursor:pointer}
+.slot:hover:not([disabled]){border-color:#171717}
+.slot[aria-pressed="true"]{background:#171717;color:#fff;border-color:#171717}
+.slot[disabled]{color:#c4c4c4;text-decoration:line-through;cursor:default;background:#fafafa}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#171717;color:#fff;font-size:14px;padding:10px 16px;border-radius:999px;z-index:60}
+</style>
+</head>
+<body>
+
+<header class="sticky top-0 z-50 border-b border-neutral-100 bg-white">
+  <div class="mx-auto flex max-w-content items-center gap-6 px-5 py-3">
+    <a href="/" class="flex items-center gap-2 font-serif text-[19px] text-neutral-900">
+      <span class="grid h-7 w-7 place-items-center rounded-sm bg-neutral-800 font-mono text-[11px] text-white">jn</span>
+      jeeneetrank<span class="text-neutral-400">.com</span>
+    </a>
+    <span class="font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-400">1:1 counselling</span>
+    <a href="predict.html" class="ml-auto rounded-sm border border-neutral-800 px-4 py-2 text-[14px] text-neutral-800 transition-colors duration-500 ease-smooth hover:bg-neutral-50">Free predictor</a>
+  </div>
+</header>
+
+<main class="mx-auto max-w-content px-5 py-10 md:py-14">
+  <div class="grid gap-10 lg:grid-cols-[1fr_420px] lg:items-start">
+    <!-- ── left: pitch + booking form ── -->
+    <div>
+      <p class="mb-3 font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-400">Book a session</p>
+      <h1 class="max-w-[16ch] font-serif text-[clamp(2.2rem,5vw,3.4rem)] leading-[1.06] text-neutral-900">45 minutes on <em class="text-neutral-500">your</em> counselling, with a person.</h1>
+      <p class="mt-5 max-w-xl text-[16px] leading-relaxed text-neutral-700">A video call to go through your rank, your list and your questions — what's realistic, how to order it, what to do when the allotment comes, which documents will trip you up. We share the screen and work on the predictor together. You leave with a list you understand.</p>
+
+      <ul class="mt-6 grid gap-3 sm:grid-cols-2">
+        <li class="rounded-lg border border-neutral-100 p-4"><p class="text-[14px] font-semibold text-neutral-900">Your list, line by line</p><p class="mt-1 text-[14px] text-neutral-600">Order, gaps, safety at the bottom, HS/OS and category logic.</p></li>
+        <li class="rounded-lg border border-neutral-100 p-4"><p class="text-[14px] font-semibold text-neutral-900">Round strategy</p><p class="mt-1 text-[14px] text-neutral-600">Freeze, float or slide — for the seat you actually get.</p></li>
+        <li class="rounded-lg border border-neutral-100 p-4"><p class="text-[14px] font-semibold text-neutral-900">Document pre-flight</p><p class="mt-1 text-[14px] text-neutral-600">Category, EWS, domicile certificates — dates, formats, who signs.</p></li>
+        <li class="rounded-lg border border-neutral-100 p-4"><p class="text-[14px] font-semibold text-neutral-900">Honest cost view</p><p class="mt-1 text-[14px] text-neutral-600">Fees, hostel, bonds, scholarships — before you commit.</p></li>
+      </ul>
+
+      <p class="mt-6 text-[13px] leading-relaxed text-neutral-500">We give you the maths and the rules; you submit everything yourself on the official portal. Nobody here can "arrange" a seat, and you should walk away from anyone who says they can.</p>
+    </div>
+
+    <!-- ── right: booking card ── -->
+    <form id="bf" class="rounded-lg border border-neutral-900 bg-white">
+      <div class="flex items-baseline justify-between border-b border-neutral-200 bg-neutral-50 px-5 py-4">
+        <div>
+          <p class="text-[14px] font-semibold text-neutral-900">1:1 session · 45 min · video call</p>
+          <p class="mt-0.5 text-[13px] text-neutral-500">Google Meet link sent on WhatsApp after confirmation.</p>
+        </div>
+        <p class="font-serif text-[30px] leading-none text-neutral-900">₹999</p>
+      </div>
+
+      <div class="space-y-5 p-5">
+        <div>
+          <p class="mb-2 text-[13px] font-medium text-neutral-900">Pick a day <span class="font-normal text-neutral-500">(IST)</span></p>
+          <div id="days" class="flex gap-2 overflow-x-auto pb-1"></div>
+        </div>
+        <div>
+          <p class="mb-2 text-[13px] font-medium text-neutral-900">Pick a time</p>
+          <div id="slots" class="grid grid-cols-3 gap-2"></div>
+          <p id="slotsNote" class="mt-2 font-mono text-[11px] text-neutral-400">Weekdays 6–9 pm · weekends 11 am–9 pm</p>
+        </div>
+
+        <div class="grid gap-3 border-t border-neutral-100 pt-5 sm:grid-cols-2">
+          <label class="block sm:col-span-2"><span class="mb-1.5 block text-[13px] font-medium text-neutral-900">Your name</span><input name="name" required maxlength="80" class="h-10 w-full rounded-md border border-neutral-200 px-3.5 text-[14px]"></label>
+          <label class="block"><span class="mb-1.5 block text-[13px] font-medium text-neutral-900">WhatsApp number</span><input name="phone" required inputmode="tel" placeholder="+91 98xxx xxxxx" class="h-10 w-full rounded-md border border-neutral-200 px-3.5 font-mono text-[14px]"></label>
+          <label class="block"><span class="mb-1.5 block text-[13px] font-medium text-neutral-900">Email <span class="font-normal text-neutral-500">(optional)</span></span><input name="email" type="email" class="h-10 w-full rounded-md border border-neutral-200 px-3.5 text-[14px]"></label>
+          <label class="block"><span class="mb-1.5 block text-[13px] font-medium text-neutral-900">Exam</span><select name="exam" class="h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-[14px]"><option>JEE</option><option>NEET</option></select></label>
+          <label class="block"><span class="mb-1.5 block text-[13px] font-medium text-neutral-900">Rank (CRL / AIR)</span><input name="rank" type="number" min="1" required inputmode="numeric" class="h-10 w-full rounded-md border border-neutral-200 px-3.5 font-mono text-[14px]"></label>
+          <label class="block"><span class="mb-1.5 block text-[13px] font-medium text-neutral-900">Category</span><select name="category" class="h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-[14px]"><option>OPEN</option><option>EWS</option><option>OBC-NCL</option><option>SC</option><option>ST</option></select></label>
+          <label class="block"><span class="mb-1.5 block text-[13px] font-medium text-neutral-900">Home state</span><select name="state" id="state" class="h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-[14px]"></select></label>
+          <label class="block sm:col-span-2"><span class="mb-1.5 block text-[13px] font-medium text-neutral-900">What do you want to cover? <span class="font-normal text-neutral-500">(optional)</span></span><textarea name="notes" rows="3" maxlength="1000" placeholder="e.g. CSE vs ECE at NIT level, whether to float from Round 1, EWS certificate dated last year…" class="w-full rounded-md border border-neutral-200 px-3.5 py-2.5 text-[14px]"></textarea></label>
+        </div>
+
+        <button id="submit" class="h-11 w-full rounded-sm bg-neutral-800 text-[15px] text-white transition-colors duration-500 ease-smooth hover:bg-neutral-900 disabled:opacity-40">Book this slot</button>
+        <p class="text-[12px] leading-relaxed text-neutral-500">No payment now. We confirm on WhatsApp within a few hours with the Meet link and a UPI request for ₹999; the slot is held for you till then. Reschedule free up to 6 hours before.</p>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── confirmation ── -->
+  <section id="done" class="osui-dot-grid mx-auto mt-10 hidden max-w-2xl rounded-2xl border border-neutral-200 p-8 text-center">
+    <p class="font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-400">Booked</p>
+    <h2 class="mt-2 font-serif text-[clamp(1.8rem,4vw,2.6rem)] leading-[1.15] text-neutral-900">See you on <span id="doneWhen"></span></h2>
+    <p class="mt-3 text-[15px] text-neutral-700">Booking <span id="doneId" class="font-mono text-neutral-900"></span>. We'll message <span id="donePhone" class="font-mono text-neutral-900"></span> on WhatsApp to confirm and share the Meet link. Before the call, run your numbers on the <a class="underline underline-offset-2" href="predict.html">free predictor</a> and build a first draft of your list — we'll start from there.</p>
+  </section>
+</main>
+
+<footer class="mx-auto max-w-content px-5 py-10">
+  <p class="max-w-2xl text-[13px] leading-relaxed text-neutral-500">Advisory only. Always verify eligibility, quotas and your final option order on the official JoSAA, CSAB, MCC or state counselling portal before submitting. Not affiliated with NTA, JoSAA, MCC or any college.</p>
+</footer>
+
+<div id="toast" hidden></div>
+
+<script>
+const API = "https://jeeneetrank-chat.marknaman05.workers.dev";
+const STATES = ["Andaman and Nicobar Islands","Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chandigarh","Chhattisgarh","Dadra and Nagar Haveli","Daman and Diu","Delhi","Goa","Gujarat","Haryana","Himachal Pradesh","Jammu and Kashmir","Jharkhand","Karnataka","Kerala","Ladakh","Lakshadweep","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Puducherry","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal","Outside India"];
+const $ = id => document.getElementById(id);
+$("state").innerHTML = STATES.map(s => `<option>${s}</option>`).join("");
+
+// Same schedule as the Worker: 45-min slots, 18:00-21:00 weekdays, 11:00-21:00 weekends, IST.
+const SLOT = 45, DAYS = 14;
+const pad = n => String(n).padStart(2, "0");
+const istNow = () => new Date(Date.now() + 5.5 * 3600e3);      // wall-clock IST as a UTC-labelled Date
+const key = (d, mins) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(Math.floor(mins / 60))}:${pad(mins % 60)}`;
+const fmtTime = mins => { const h = Math.floor(mins / 60), m = mins % 60, ap = h >= 12 ? "pm" : "am"; return `${h % 12 || 12}:${pad(m)} ${ap}`; };
+const dayName = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], monName = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+let taken = new Set(), chosenDay = null, chosenSlot = null;
+
+function slotsFor(d) {
+  const dow = d.getUTCDay(), first = (dow === 0 || dow === 6) ? 11 * 60 : 18 * 60, last = 21 * 60;
+  const out = [];
+  for (let m = first; m + SLOT <= last; m += SLOT) out.push(m);
+  return out;
+}
+function isPast(d, mins) {
+  const now = istNow();
+  const start = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), Math.floor(mins / 60), mins % 60);
+  return start < now.getTime() + 2 * 3600e3;   // need 2 hours' notice
+}
+
+function drawDays() {
+  const today = istNow(); today.setUTCHours(0, 0, 0, 0);
+  const days = [];
+  for (let i = 0; i < DAYS; i++) days.push(new Date(today.getTime() + i * 86400e3));
+  $("days").innerHTML = days.map(d => {
+    const free = slotsFor(d).filter(m => !isPast(d, m) && !taken.has(key(d, m))).length;
+    return `<button type="button" class="day" data-day="${d.getTime()}" aria-pressed="${chosenDay === d.getTime()}" ${free ? "" : "disabled"}>
+      <p class="font-mono text-[10px] uppercase tracking-[0.1em] ${chosenDay === d.getTime() ? "text-neutral-300" : "text-neutral-400"}">${dayName[d.getUTCDay()]}</p>
+      <p class="font-serif text-[22px] leading-none">${d.getUTCDate()}</p>
+      <p class="text-[11px] ${chosenDay === d.getTime() ? "text-neutral-300" : "text-neutral-500"}">${monName[d.getUTCMonth()]}</p>
+      <p class="mt-1 font-mono text-[10px] ${chosenDay === d.getTime() ? "text-neutral-300" : "text-neutral-400"}">${free ? free + " free" : "full"}</p></button>`;
+  }).join("");
+}
+function drawSlots() {
+  if (chosenDay === null) { $("slots").innerHTML = `<p class="col-span-3 text-[13px] text-neutral-500">Pick a day first.</p>`; return; }
+  const d = new Date(chosenDay);
+  $("slots").innerHTML = slotsFor(d).map(m => {
+    const k = key(d, m), gone = isPast(d, m) || taken.has(k);
+    return `<button type="button" class="slot" data-slot="${k}" aria-pressed="${chosenSlot === k}" ${gone ? "disabled" : ""}>${fmtTime(m)}</button>`;
+  }).join("");
+  $("submit").disabled = !chosenSlot;
+}
+$("days").addEventListener("click", e => { const b = e.target.closest(".day"); if (!b || b.disabled) return; chosenDay = +b.dataset.day; chosenSlot = null; drawDays(); drawSlots(); });
+$("slots").addEventListener("click", e => { const b = e.target.closest(".slot"); if (!b || b.disabled) return; chosenSlot = b.dataset.slot; drawSlots(); });
+
+function toast(t) { const el = $("toast"); el.textContent = t; el.hidden = false; clearTimeout(el.timer); el.timer = setTimeout(() => { el.hidden = true; }, 6000); }
+
+async function loadTaken() {
+  try { const r = await fetch(API + "/slots"); if (r.ok) taken = new Set((await r.json()).taken); } catch (_) {}
+  drawDays(); drawSlots();
+}
+loadTaken();
+
+$("bf").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (!chosenSlot) { toast("Pick a day and a time first."); return; }
+  const f = new FormData(e.target), body = Object.fromEntries(f.entries()); body.slot = chosenSlot;
+  $("submit").disabled = true; $("submit").textContent = "Booking…";
+  try {
+    const r = await fetch(API + "/book", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const out = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(out.error || `error ${r.status}`);
+    const [date, time] = chosenSlot.split("T"), d = new Date(date + "T00:00:00Z"), mins = +time.slice(0, 2) * 60 + +time.slice(3);
+    $("doneWhen").textContent = `${dayName[d.getUTCDay()]} ${d.getUTCDate()} ${monName[d.getUTCMonth()]}, ${fmtTime(mins)} IST`;
+    $("doneId").textContent = "#" + out.id; $("donePhone").textContent = body.phone;
+    $("bf").hidden = true; $("done").classList.remove("hidden"); $("done").scrollIntoView({ behavior: "smooth" });
+  } catch (err) {
+    toast(err.message === "Failed to fetch" ? "Couldn't reach the booking service — try again." : err.message);
+    $("submit").disabled = false; $("submit").textContent = "Book this slot";
+    if (/taken/.test(err.message)) loadTaken();
+  }
+});
+</script>
+</body>
+</html>

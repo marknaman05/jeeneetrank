@@ -15,3 +15,8 @@ ALLOWED_ORIGINS = "https://jeeneetrank.com,https://www.jeeneetrank.com,http://lo
 name = "RATE"
 namespace_id = "1001"
 simple = { limit = 20, period = 60 }
+
+# 1:1 session bookings (see /slots, /book, /bookings in worker.js).
+[[kv_namespaces]]
+binding = "BOOKINGS"
+id = "12490a8b3a0647c3a6c0931e3436931c"

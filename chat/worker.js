@@ -25,8 +25,43 @@ export default {
       "Vary": "Origin",
     };
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors });
-    if (request.method !== "POST" || new URL(request.url).pathname !== "/chat") {
-      return new Response("jeeneetrank chat: POST /chat", { status: 404, headers: cors });
+    const path = new URL(request.url).pathname;
+
+    // ── 1:1 session bookings ──────────────────────────────────────────
+    if (path === "/slots" && request.method === "GET") {
+      if (!allowed.includes(origin)) return json({ error: "origin not allowed" }, 403, cors);
+      // One index key rather than list(): KV list() lags up to a minute,
+      // get() of a key you just wrote does not.
+      const taken = (await env.BOOKINGS.get("taken", "json")) || [];
+      const cutoff = new Date(Date.now() - 86400e3).toISOString().slice(0, 16);
+      return json({ taken: taken.filter(t => t >= cutoff) }, 200, cors);
+    }
+    if (path === "/book" && request.method === "POST") {
+      if (!allowed.includes(origin)) return json({ error: "origin not allowed" }, 403, cors);
+      if (env.RATE) { const { success } = await env.RATE.limit({ key: "book:" + (request.headers.get("CF-Connecting-IP") || "x") }); if (!success) return json({ error: "Too many attempts — try again in a minute." }, 429, cors); }
+      let b; try { b = await request.json(); } catch { return json({ error: "bad json" }, 400, cors); }
+      const err = validateBooking(b);
+      if (err) return json({ error: err }, 400, cors);
+      const key = "slot:" + b.slot;
+      if (await env.BOOKINGS.get(key)) return json({ error: "That slot was just taken — pick another." }, 409, cors);
+      const id = crypto.randomUUID().slice(0, 8).toUpperCase();
+      const record = { id, slot: b.slot, name: b.name, phone: b.phone, email: b.email || "", exam: b.exam, rank: b.rank, category: b.category, state: b.state || "", notes: (b.notes || "").slice(0, 1000), created: new Date().toISOString(), ip: request.headers.get("CF-Connecting-IP") || "" };
+      await env.BOOKINGS.put(key, JSON.stringify(record));
+      await env.BOOKINGS.put("booking:" + record.created + ":" + id, JSON.stringify(record));
+      const taken = (await env.BOOKINGS.get("taken", "json")) || [];
+      if (!taken.includes(b.slot)) { taken.push(b.slot); await env.BOOKINGS.put("taken", JSON.stringify(taken.slice(-500))); }
+      return json({ ok: true, id, slot: b.slot }, 200, cors);
+    }
+    if (path === "/bookings" && request.method === "GET") {
+      // For the owner: curl -H "Authorization: Bearer $ADMIN_TOKEN" .../bookings
+      if (!env.ADMIN_TOKEN || request.headers.get("Authorization") !== `Bearer ${env.ADMIN_TOKEN}`) return json({ error: "no" }, 401, cors);
+      const keys = (await env.BOOKINGS.list({ prefix: "booking:" })).keys;
+      const rows = await Promise.all(keys.map(k => env.BOOKINGS.get(k.name, "json")));
+      return json({ bookings: rows.sort((a, b) => a.slot.localeCompare(b.slot)) }, 200, cors);
+    }
+
+    if (request.method !== "POST" || path !== "/chat") {
+      return new Response("jeeneetrank: POST /chat · GET /slots · POST /book", { status: 404, headers: cors });
     }
     if (!allowed.includes(origin)) return json({ error: "origin not allowed" }, 403, cors);
 
@@ -132,6 +167,33 @@ function guard(text) {
   return null;
 }
 
+/* Booking slots are "YYYY-MM-DDTHH:MM" in IST, 45 minutes, on the site's
+ * schedule: 18:00-21:00 on weekdays, 11:00-21:00 on weekends, within the
+ * next 14 days.  The page offers the same grid; this is the backstop. */
+const SLOT_MINUTES = 45;
+function slotIsOffered(slot) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(slot);
+  if (!m) return false;
+  const [, y, mo, d, h, mi] = m.map(Number);
+  const startUtc = Date.UTC(y, mo - 1, d, h - 5, mi - 30);   // IST -> UTC
+  const now = Date.now();
+  if (startUtc < now + 2 * 3600e3 || startUtc > now + 14 * 86400e3) return false;
+  const dow = new Date(startUtc + 5.5 * 3600e3).getUTCDay();  // 0 = Sunday, in IST
+  const minutes = h * 60 + mi, first = (dow === 0 || dow === 6) ? 11 * 60 : 18 * 60, last = 21 * 60;
+  return minutes >= first && minutes + SLOT_MINUTES <= last && (minutes - first) % SLOT_MINUTES === 0;
+}
+function validateBooking(b) {
+  if (!b || typeof b !== "object") return "bad request";
+  if (!slotIsOffered(String(b.slot || ""))) return "that time is not available";
+  if (!b.name || String(b.name).trim().length < 2 || String(b.name).length > 80) return "please give your name";
+  if (!/^\+?[0-9][0-9 \-]{7,14}$/.test(String(b.phone || ""))) return "please give a valid WhatsApp number";
+  if (b.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(b.email))) return "that email does not look right";
+  if (!["JEE", "NEET"].includes(b.exam)) return "choose JEE or NEET";
+  if (!(Number(b.rank) > 0)) return "please give your rank";
+  if (!b.category) return "choose a category";
+  return null;
+}
+
 function sanitise(list) {
   if (!Array.isArray(list)) return [];
   const out = [];
@@ -170,7 +232,8 @@ Boundaries (follow strictly):
 Season Pass (what the site sells; ₹499 one-time for JEE covering the whole JoSAA + CSAB cycle, ₹699 for NEET; not a subscription): round-by-round freeze/float/slide calls on the student's actual allotment, deadline alerts on WhatsApp timed to their counselling body's calendar, document and eligibility pre-flight (certificates, formats, dates), fee/hostel/bond total-cost view, saved list scenarios. Link: https://jeeneetrank.com/#pricing
 - The free predictor on this page answers "which seats and with what chance". When a student asks for anything beyond that — reminders, what to do when the allotment comes, document checks, cost breakdowns, tracking across rounds, "will you tell me when…" — answer what you can in one or two lines, then say the Season Pass does exactly that, in one sentence with the link.
 - Also, once per conversation, after you have given a genuinely useful answer, add one short closing line pointing to the Season Pass for the rounds ahead. Never more than once per conversation, never as the first thing, never in place of an answer, and never in a reply about distress or after a refusal.
-- Do not exaggerate what the Pass does, and never claim it can get anyone a seat.
+- There is also a paid 1:1 session: a 45-minute video call with a counsellor, ₹999, booked at https://jeeneetrank.com/book.html. Mention it (once) when the student wants a person to go through their whole list with them, is very confused, or is a parent asking for help.
+- Do not exaggerate what the Pass or the session does, and never claim either can get anyone a seat.
 
 Style: concise, warm, direct — under 120 words unless the student asks for detail. Plain language; short paragraphs or a short list. Name at most 5 seats per answer. Answer in the language the student writes in (English, Hindi or Hinglish). Do not moralise. Say clearly when something is uncertain. Never suggest paying anyone for a seat; refer official matters to josaa.nic.in.
 
