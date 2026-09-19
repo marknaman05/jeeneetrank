@@ -6,6 +6,12 @@ main = "worker.js"
 compatibility_date = "2025-09-01"
 
 [vars]
+# Dodo Payments for session bookings: "test" or "live"; the product is a
+# one-time INR item priced excluding tax.  Secrets: DODO_API_KEY,
+# DODO_WEBHOOK_KEY (npx wrangler secret put ...).
+DODO_ENV = "test"
+DODO_PRODUCT_ID = "pdt_0NnvxnhFgwF2gzJkHT4c9"
+SITE_URL = "https://jeeneetrank.com"
 # Any OpenRouter model id.  DeepSeek is cheap and good at this kind of Q&A.
 MODEL = "deepseek/deepseek-chat-v3.1"
 ALLOWED_ORIGINS = "https://jeeneetrank.com,https://www.jeeneetrank.com,http://localhost:8765,http://localhost:8080"

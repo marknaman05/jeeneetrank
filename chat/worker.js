@@ -28,36 +28,75 @@ export default {
     const path = new URL(request.url).pathname;
 
     // ── 1:1 session bookings ──────────────────────────────────────────
+    // Pay first: /book holds the slot for 15 minutes and returns a Dodo
+    // checkout URL; Dodo's webhook confirms it; /booking reports status.
     if (path === "/slots" && request.method === "GET") {
       if (!allowed.includes(origin)) return json({ error: "origin not allowed" }, 403, cors);
-      // One index key rather than list(): KV list() lags up to a minute,
-      // get() of a key you just wrote does not.
-      const taken = (await env.BOOKINGS.get("taken", "json")) || [];
-      const cutoff = new Date(Date.now() - 86400e3).toISOString().slice(0, 16);
-      return json({ taken: taken.filter(t => t >= cutoff) }, 200, cors);
+      return json({ taken: await takenSlots(env) }, 200, cors);
     }
     if (path === "/book" && request.method === "POST") {
       if (!allowed.includes(origin)) return json({ error: "origin not allowed" }, 403, cors);
       if (env.RATE) { const { success } = await env.RATE.limit({ key: "book:" + (request.headers.get("CF-Connecting-IP") || "x") }); if (!success) return json({ error: "Too many attempts — try again in a minute." }, 429, cors); }
+      if (!env.DODO_API_KEY || !env.DODO_PRODUCT_ID) return json({ error: "Bookings are not open yet." }, 503, cors);
       let b; try { b = await request.json(); } catch { return json({ error: "bad json" }, 400, cors); }
       const err = validateBooking(b);
       if (err) return json({ error: err }, 400, cors);
-      const key = "slot:" + b.slot;
-      if (await env.BOOKINGS.get(key)) return json({ error: "That slot was just taken — pick another." }, 409, cors);
+      if ((await takenSlots(env)).includes(b.slot)) return json({ error: "That slot was just taken — pick another." }, 409, cors);
       const id = crypto.randomUUID().slice(0, 8).toUpperCase();
-      const record = { id, slot: b.slot, name: b.name, phone: b.phone, email: b.email || "", exam: b.exam, rank: b.rank, category: b.category, state: b.state || "", notes: (b.notes || "").slice(0, 1000), created: new Date().toISOString(), ip: request.headers.get("CF-Connecting-IP") || "" };
-      await env.BOOKINGS.put(key, JSON.stringify(record));
-      await env.BOOKINGS.put("booking:" + record.created + ":" + id, JSON.stringify(record));
-      const taken = (await env.BOOKINGS.get("taken", "json")) || [];
-      if (!taken.includes(b.slot)) { taken.push(b.slot); await env.BOOKINGS.put("taken", JSON.stringify(taken.slice(-500))); }
-      return json({ ok: true, id, slot: b.slot }, 200, cors);
+      const record = { id, status: "pending", slot: b.slot, name: b.name, phone: b.phone, email: b.email, exam: b.exam, rank: b.rank, category: b.category, state: b.state || "", notes: (b.notes || "").slice(0, 1000), created: new Date().toISOString(), ip: request.headers.get("CF-Connecting-IP") || "" };
+      // Checkout in the student's name; the booking id rides along in metadata.
+      const site = (env.SITE_URL || "https://jeeneetrank.com").replace(/\/$/, "");
+      const r = await fetch(`${dodoHost(env)}/checkouts`, {
+        method: "POST",
+        headers: { "content-type": "application/json", "authorization": `Bearer ${env.DODO_API_KEY}` },
+        body: JSON.stringify({
+          product_cart: [{ product_id: env.DODO_PRODUCT_ID, quantity: 1 }],
+          customer: { email: b.email, name: b.name, phone_number: b.phone.replace(/[^+0-9]/g, "") },
+          billing_address: { country: "IN" },
+          metadata: { booking_id: id, slot: b.slot },
+          return_url: `${site}/book.html?booking=${id}`,
+        }),
+      });
+      if (!r.ok) { const detail = await r.text(); console.log("dodo checkout failed", r.status, detail.slice(0, 300)); return json({ error: "Could not start payment — try again in a moment." }, 502, cors); }
+      const session = await r.json();
+      record.checkout = session.session_id || "";
+      await env.BOOKINGS.put("booking:" + id, JSON.stringify(record));
+      await holdSlot(env, b.slot, id);
+      return json({ ok: true, id, url: session.checkout_url }, 200, cors);
+    }
+    if (path === "/booking" && request.method === "GET") {
+      if (!allowed.includes(origin)) return json({ error: "origin not allowed" }, 403, cors);
+      const id = (new URL(request.url).searchParams.get("id") || "").toUpperCase();
+      const rec = /^[A-Z0-9]{8}$/.test(id) ? await env.BOOKINGS.get("booking:" + id, "json") : null;
+      if (!rec) return json({ error: "no such booking" }, 404, cors);
+      return json({ id, status: rec.status, slot: rec.slot, phone: rec.phone }, 200, cors);
+    }
+    if (path === "/dodo-webhook" && request.method === "POST") {
+      const raw = await request.text();
+      if (!(await verifyWebhook(env.DODO_WEBHOOK_KEY, request.headers, raw))) return json({ error: "bad signature" }, 401, cors);
+      let ev; try { ev = JSON.parse(raw); } catch { return json({ error: "bad json" }, 400, cors); }
+      const id = ev?.data?.metadata?.booking_id;
+      if (ev.type === "payment.succeeded" && id) {
+        const rec = await env.BOOKINGS.get("booking:" + id, "json");
+        if (rec && rec.status !== "paid") {
+          rec.status = "paid"; rec.paid_at = ev.timestamp || new Date().toISOString(); rec.payment_id = ev.data.payment_id || "";
+          rec.amount = ev.data.total_amount; rec.currency = ev.data.currency;
+          await env.BOOKINGS.put("booking:" + id, JSON.stringify(rec));
+          await confirmSlot(env, rec.slot, id);
+        }
+      } else if ((ev.type === "payment.failed" || ev.type === "payment.cancelled") && id) {
+        const rec = await env.BOOKINGS.get("booking:" + id, "json");
+        if (rec && rec.status === "pending") { rec.status = "failed"; await env.BOOKINGS.put("booking:" + id, JSON.stringify(rec)); await releaseSlot(env, rec.slot, id); }
+      }
+      return json({ received: true }, 200, cors);
     }
     if (path === "/bookings" && request.method === "GET") {
       // For the owner: curl -H "Authorization: Bearer $ADMIN_TOKEN" .../bookings
       if (!env.ADMIN_TOKEN || request.headers.get("Authorization") !== `Bearer ${env.ADMIN_TOKEN}`) return json({ error: "no" }, 401, cors);
       const keys = (await env.BOOKINGS.list({ prefix: "booking:" })).keys;
-      const rows = await Promise.all(keys.map(k => env.BOOKINGS.get(k.name, "json")));
-      return json({ bookings: rows.sort((a, b) => a.slot.localeCompare(b.slot)) }, 200, cors);
+      const rows = (await Promise.all(keys.map(k => env.BOOKINGS.get(k.name, "json")))).filter(Boolean);
+      const want = new URL(request.url).searchParams.get("status");
+      return json({ bookings: rows.filter(r => !want || r.status === want).sort((a, b) => a.slot.localeCompare(b.slot)) }, 200, cors);
     }
 
     if (request.method !== "POST" || path !== "/chat") {
@@ -167,6 +206,47 @@ function guard(text) {
   return null;
 }
 
+/* Slot bookkeeping.  One index key "taken": [{slot, id, until}] where
+ * until is an ISO time for a payment hold (15 min) or null once paid.
+ * A single key rather than list(): KV list() lags up to a minute, get()
+ * of a key you just wrote does not. */
+const HOLD_MS = 15 * 60e3;
+async function readIndex(env) {
+  const now = new Date().toISOString();
+  const all = (await env.BOOKINGS.get("taken", "json")) || [];
+  return all.filter(t => t.until === null || t.until > now);   // expired holds fall away
+}
+async function takenSlots(env) { return (await readIndex(env)).map(t => t.slot); }
+async function holdSlot(env, slot, id) {
+  const idx = (await readIndex(env)).filter(t => t.slot !== slot);
+  idx.push({ slot, id, until: new Date(Date.now() + HOLD_MS).toISOString() });
+  await env.BOOKINGS.put("taken", JSON.stringify(idx.slice(-500)));
+}
+async function confirmSlot(env, slot, id) {
+  const idx = (await readIndex(env)).filter(t => t.slot !== slot);
+  idx.push({ slot, id, until: null });
+  await env.BOOKINGS.put("taken", JSON.stringify(idx.slice(-500)));
+}
+async function releaseSlot(env, slot, id) {
+  const idx = (await readIndex(env)).filter(t => !(t.slot === slot && t.id === id));
+  await env.BOOKINGS.put("taken", JSON.stringify(idx));
+}
+function dodoHost(env) { return env.DODO_ENV === "live" ? "https://live.dodopayments.com" : "https://test.dodopayments.com"; }
+
+/* Standard Webhooks signature check (what Dodo uses): HMAC-SHA256 over
+ * "<id>.<timestamp>.<body>" with the base64 secret after "whsec_". */
+async function verifyWebhook(secret, headers, body) {
+  if (!secret) return false;
+  const id = headers.get("webhook-id"), ts = headers.get("webhook-timestamp"), sigs = headers.get("webhook-signature");
+  if (!id || !ts || !sigs) return false;
+  if (Math.abs(Date.now() / 1000 - Number(ts)) > 300) return false;
+  const keyBytes = Uint8Array.from(atob(secret.replace(/^whsec_/, "")), c => c.charCodeAt(0));
+  const key = await crypto.subtle.importKey("raw", keyBytes, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(`${id}.${ts}.${body}`));
+  const expected = btoa(String.fromCharCode(...new Uint8Array(mac)));
+  return sigs.split(" ").some(s => s.split(",")[1] === expected);
+}
+
 /* Booking slots are "YYYY-MM-DDTHH:MM" in IST, 45 minutes, on the site's
  * schedule: 18:00-21:00 on weekdays, 11:00-21:00 on weekends, within the
  * next 14 days.  The page offers the same grid; this is the backstop. */
@@ -187,7 +267,7 @@ function validateBooking(b) {
   if (!slotIsOffered(String(b.slot || ""))) return "that time is not available";
   if (!b.name || String(b.name).trim().length < 2 || String(b.name).length > 80) return "please give your name";
   if (!/^\+?[0-9][0-9 \-]{7,14}$/.test(String(b.phone || ""))) return "please give a valid WhatsApp number";
-  if (b.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(b.email))) return "that email does not look right";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(b.email || ""))) return "please give a valid email (the receipt goes there)";
   if (!["JEE", "NEET"].includes(b.exam)) return "choose JEE or NEET";
   if (!(Number(b.rank) > 0)) return "please give your rank";
   if (!b.category) return "choose a category";
@@ -232,7 +312,7 @@ Boundaries (follow strictly):
 Season Pass (what the site sells; ₹499 one-time for JEE covering the whole JoSAA + CSAB cycle, ₹699 for NEET; not a subscription): round-by-round freeze/float/slide calls on the student's actual allotment, deadline alerts on WhatsApp timed to their counselling body's calendar, document and eligibility pre-flight (certificates, formats, dates), fee/hostel/bond total-cost view, saved list scenarios. Link: https://jeeneetrank.com/#pricing
 - The free predictor on this page answers "which seats and with what chance". When a student asks for anything beyond that — reminders, what to do when the allotment comes, document checks, cost breakdowns, tracking across rounds, "will you tell me when…" — answer what you can in one or two lines, then say the Season Pass does exactly that, in one sentence with the link.
 - Also, once per conversation, after you have given a genuinely useful answer, add one short closing line pointing to the Season Pass for the rounds ahead. Never more than once per conversation, never as the first thing, never in place of an answer, and never in a reply about distress or after a refusal.
-- There is also a paid 1:1 session: a 45-minute video call with a counsellor, ₹999, booked at https://jeeneetrank.com/book.html. Mention it (once) when the student wants a person to go through their whole list with them, is very confused, or is a parent asking for help.
+- There is also a paid 1:1 session: a 45-minute video call with our counsellor (a BITS Pilani B.E. Computer Science graduate), ₹399 + GST, booked and paid at https://jeeneetrank.com/book.html. Mention it (once) when the student wants a person to go through their whole list with them, is very confused, or is a parent asking for help.
 - Do not exaggerate what the Pass or the session does, and never claim either can get anyone a seat.
 
 Style: concise, warm, direct — under 120 words unless the student asks for detail. Plain language; short paragraphs or a short list. Name at most 5 seats per answer. Answer in the language the student writes in (English, Hindi or Hinglish). Do not moralise. Say clearly when something is uncertain. Never suggest paying anyone for a seat; refer official matters to josaa.nic.in.

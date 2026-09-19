@@ -33,10 +33,10 @@ A floating assistant on the predictor. Each message carries the page state (inpu
 
 ## 1:1 session bookings (`book.html`)
 
-Slots are 45 min, 6–9 pm IST weekdays / 11 am–9 pm weekends, next 14 days. The Worker stores bookings in KV (`BOOKINGS`), prevents double booking and validates the schedule server-side. Read them with:
+Slots are 45 min, 6–9 pm IST weekdays / 11 am–9 pm weekends, next 14 days. Pay-first: `POST /book` validates, holds the slot for 15 minutes and returns a Dodo checkout URL (₹399 + GST product); Dodo's `payment.succeeded` webhook at `/dodo-webhook` confirms it; the page polls `GET /booking?id=`. Worker vars `DODO_ENV`, `DODO_PRODUCT_ID`, `SITE_URL`; secrets `DODO_API_KEY`, `DODO_WEBHOOK_KEY`. Read them with:
 
 ```
 curl -H "Authorization: Bearer $ADMIN_TOKEN" https://jeeneetrank-chat.marknaman05.workers.dev/bookings
 ```
 
-(`ADMIN_TOKEN` is a Worker secret; a copy is in `chat/.dev.vars`, gitignored.) No payment is taken on the page — confirm on WhatsApp and collect via UPI.
+(`ADMIN_TOKEN` is a Worker secret; a copy is in `chat/.dev.vars`, gitignored.) Only `status: "paid"` bookings are real; `?status=paid` filters.
