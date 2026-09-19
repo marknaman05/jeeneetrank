@@ -112,6 +112,7 @@ function simulate(data, elig, seed = 1) {
   }
   const nInst = data.institutes.length;
   const hits = new Uint8Array(RUNS * n);
+  const crs = new Float32Array(RUNS * n);  // the simulated final closing ranks, for the round advisor
   const count = new Uint32Array(n);
   const instShock = new Float64Array(nInst);
   for (let r = 0; r < RUNS; r++) {
@@ -120,12 +121,48 @@ function simulate(data, elig, seed = 1) {
     const row = r * n;
     for (let i = 0; i < n; i++) {
       const cr = closing[i] * Math.exp(year + instShock[inst[i]] + sigma[i] * student4(rand));
+      crs[row + i] = cr;
       if (rank[i] <= cr) { hits[row + i] = 1; count[i]++; }
     }
   }
   const p = new Float64Array(n);
   for (let i = 0; i < n; i++) p[i] = count[i] / RUNS;
-  return { p, hits, n };
+  return { p, hits, crs, n };
+}
+
+/* Round advisor.  The candidate was NOT admitted to these seats in round
+ * `round` (their rank was beyond each seat's closing rank then).  For each,
+ * the chance its final-round closing rank reaches them after all -- i.e.
+ * what floating could win -- and the chance of at least one doing so.
+ *
+ * Per run: the seat's final closing F comes from the simulation; its
+ * round-r closing is F / exp(L) with L drawn from that round's empirical
+ * loosening.  Runs where the round-r closing already admitted the candidate
+ * contradict what we know and are dropped; among the rest, count F >= rank.
+ */
+function upgradeOdds(data, sim, elig, indices, round, seed = 7) {
+  const q = data.rounds[String(round)];
+  if (!q) return null;
+  const rand = mulberry32(seed);
+  const n = sim.n, m = indices.length;
+  const per = new Float64Array(m), kept = new Float64Array(m);
+  let anyUp = 0, anyKept = 0;
+  for (let r = 0; r < RUNS; r++) {
+    const row = r * n;
+    let consistent = false, up = false;
+    for (let k = 0; k < m; k++) {
+      const i = indices[k], rank = elig[i].rank;
+      const F = sim.crs[row + i];
+      const L = q[Math.floor(rand() * q.length)];
+      const nowClosing = F / Math.exp(L);
+      if (nowClosing >= rank) continue;           // would already have admitted: impossible, skip
+      consistent = true; kept[k]++;
+      if (F >= rank) { per[k]++; up = true; }
+    }
+    if (consistent) { anyKept++; if (up) anyUp++; }
+  }
+  const p = Array.from(per, (v, k) => kept[k] ? v / kept[k] : 0);
+  return { perSeat: p, any: anyKept ? anyUp / anyKept : 0 };
 }
 
 /* Given an ordered list of indices into `elig`, the probability of ending
@@ -153,4 +190,4 @@ function anyOf(sim, indices) {
   return any / RUNS;
 }
 
-window.JNR = { eligible, simulate, simulateList, anyOf, RUNS };
+window.JNR = { eligible, simulate, simulateList, anyOf, upgradeOdds, RUNS };

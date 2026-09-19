@@ -146,6 +146,26 @@ button.add[aria-pressed="true"]{background:#171717;color:#fff;border-color:#1717
         <p id="listNote" class="border-t border-neutral-100 px-4 py-2.5 font-mono text-[10px] text-neutral-400" hidden>Saved in this browser. "At this position" = chance this is the seat you're allotted; earlier choices take priority. Reordering never changes the any-seat number — only which seat you end up with. To raise it, add safer seats at the bottom.</p>
       </div>
 
+      <!-- ── round advisor ── -->
+      <details id="advisor" class="mt-4 rounded-lg border border-neutral-200" hidden>
+        <summary class="flex cursor-pointer flex-wrap items-center justify-between gap-3 px-4 py-3">
+          <div>
+            <p class="text-[14px] font-semibold text-neutral-900">Round advisor · freeze or float?</p>
+            <p class="text-[12px] text-neutral-500">Got an allotment? See what floating could still win from the choices above it.</p>
+          </div>
+          <span class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">open</span>
+        </summary>
+        <div class="border-t border-neutral-100 p-4">
+          <div class="grid gap-3 sm:grid-cols-[140px_1fr]">
+            <label class="block"><span class="mb-1.5 block text-[12px] font-medium text-neutral-900">Allotted in round</span>
+              <select id="advRound" class="h-9 w-full rounded-md border border-neutral-200 bg-white px-2 text-[13px]"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+            <label class="block"><span class="mb-1.5 block text-[12px] font-medium text-neutral-900">Seat allotted</span>
+              <select id="advSeat" class="h-9 w-full rounded-md border border-neutral-200 bg-white px-2 text-[13px]"></select></label>
+          </div>
+          <div id="advOut" class="mt-4"></div>
+        </div>
+      </details>
+
       <div class="mt-4 overflow-x-auto rounded-lg border border-neutral-200">
         <table class="w-full min-w-[640px] text-left">
           <thead>
@@ -354,6 +374,7 @@ function drawList() {
       </div>
     </li>`;
   }).join("");
+  drawAdvisor();
 }
 
 function toggleSeat(s) {
@@ -383,6 +404,48 @@ $("listRows").addEventListener("click", e => {
   toast(`${DATA.institutes[moved[0]].short} → #${j + 1}: ${pc(before[k])} → ${pc(after[j])}. ${DATA.institutes[other[0]].short}: ${pc(before[j])} → ${pc(after[k])}.`);
 });
 $("listClear").addEventListener("click", () => { LIST.forEach(s => document.querySelectorAll(`button.add[data-add="${s}"]`).forEach(b => { b.setAttribute("aria-pressed", false); b.textContent = "+"; })); LIST = []; saveList(); drawList(); });
+
+/* ── round advisor ───────────────────────────────────────────────────── */
+function drawAdvisor() {
+  const adv = $("advisor");
+  adv.hidden = LIST.length < 2;
+  if (adv.hidden) return;
+  const sel = $("advSeat"), keep = sel.value;
+  sel.innerHTML = LIST.map((s, k) => `<option value="${k}">#${k + 1} ${DATA.institutes[DATA.seats[s][0]].short} · ${DATA.programs[DATA.seats[s][1]].replace(/\s*\(.*?\)\s*$/, "")}</option>`).join("")
+    + `<option value="none">Nothing allotted yet</option>`;
+  sel.value = keep && [...sel.options].some(o => o.value === keep) ? keep : String(Math.max(1, LIST.length - 1));
+  adviseRound();
+}
+function adviseRound() {
+  if (!RESULT || !LIST.length) return;
+  const round = +$("advRound").value, at = $("advSeat").value;
+  const order = listOrder();
+  const above = (at === "none" ? LIST.map((_, k) => k) : LIST.slice(0, +at).map((_, k) => k)).filter(k => order[k] >= 0);
+  const out = $("advOut");
+  if (!above.length) { out.innerHTML = `<p class="text-[13px] text-neutral-500">Nothing above this seat on your list — <b>freeze</b> if you want it, there is nothing to float for.</p>`; return; }
+  const odds = JNR.upgradeOdds(DATA, RESULT.sim, RESULT.elig, above.map(k => order[k]), round);
+  const pc = x => Math.round(x * 100);
+  const rows = above.map((k, j) => ({ k, p: odds.perSeat[j] })).sort((a, b) => a.k - b.k);
+  const anyPct = pc(odds.any);
+  const verdict = at === "none"
+    ? `<b>${anyPct}%</b> chance one of these admits you by the final round. ${anyPct < 50 ? "Register for CSAB special rounds and keep state counselling open." : "Stay in — later rounds usually reach further."}`
+    : anyPct >= 15
+      ? `<b class="text-emerald-700">Float.</b> ${anyPct}% chance of moving up to one of the ${rows.length} choice${rows.length > 1 ? "s" : ""} above; your current seat is held either way.`
+      : anyPct >= 5
+        ? `<b class="text-amber-700">Float if you'd genuinely take an upgrade.</b> Only ${anyPct}% chance anything above admits you by the final round; you keep your seat regardless.`
+        : `<b class="text-neutral-900">Freeze.</b> Under ${Math.max(1, anyPct)}% chance of an upgrade — floating only delays your reporting.`;
+  out.innerHTML = `<p class="text-[14px] leading-relaxed text-neutral-800">${verdict}</p>
+    <ul class="mt-3 divide-y divide-neutral-100 rounded-md border border-neutral-100">${rows.map(r => {
+      const seat = DATA.seats[LIST[r.k]];
+      return `<li class="flex items-center gap-3 px-3 py-2"><span class="w-6 font-mono text-[11px] text-neutral-400">${r.k + 1}.</span>
+        <span class="min-w-0 flex-1 truncate text-[13px] text-neutral-800">${DATA.institutes[seat[0]].short} · ${DATA.programs[seat[1]].replace(/\s*\(.*?\)\s*$/, "")}</span>
+        <span class="font-mono text-[12px] text-neutral-900" style="font-variant-numeric:tabular-nums">${pc(r.p)}%</span>
+        <span class="font-mono text-[9px] uppercase tracking-[0.08em] text-neutral-400">by final round</span></li>`;
+    }).join("")}</ul>
+    <p class="mt-3 font-mono text-[10px] leading-relaxed text-neutral-400">Odds are conditional on not having been admitted in round ${round}: from 2018–${DATA.season}, how much further each round's closing ranks moved by the last round. Float never loses the seat you hold; Freeze ends your participation. Slide (same institute, higher-listed programme) works the same way within one institute.</p>`;
+}
+$("advRound").addEventListener("change", adviseRound);
+$("advSeat").addEventListener("change", adviseRound);
 
 $("more").addEventListener("click", () => { page++; draw(); });
 $("q").addEventListener("input", () => { page = 1; if (RESULT) draw(); });

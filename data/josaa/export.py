@@ -18,6 +18,7 @@ from pathlib import Path
 import pandas as pd
 
 from model import ORCR, PARAMS, SEAT, final_round
+from rounds import loosening_quantiles
 
 HERE = Path(__file__).parent
 OUT = HERE.parent.parent / "site-data" / "josaa.json"
@@ -176,7 +177,8 @@ def short_name(name: str) -> str:
 
 
 def main() -> None:
-    last = final_round(pd.read_parquet(ORCR))
+    raw = pd.read_parquet(ORCR)
+    last = final_round(raw)
     year = int(last["year"].max())
     seats = last[last["year"] == year].copy()
     params = json.loads(PARAMS.read_text())
@@ -217,6 +219,8 @@ def main() -> None:
         "genders": gender_names,
         "columns": ["institute", "program", "quota", "category", "gender", "closing", "opening", "prev_closing"],
         "seats": rows,
+        # Per round, 101 quantiles of log(final closing / that round's closing), 2018 on.
+        "rounds": loosening_quantiles(raw),
         "drift": {
             "year_shock_mean": params["year_shock_mean"],
             "year_shock_sigma": params["year_shock_sigma"],
