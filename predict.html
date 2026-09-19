@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JoSAA rank predictor — jeeneetrank</title>
+<meta name="description" content="Every JoSAA seat you are eligible for, with an honest probability for your rank — simulated from 2016–2025 closing ranks, not a lookup table.">
+<link rel="canonical" href="https://jeeneetrank.com/predict">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: {
+  fontFamily: { serif:['"Instrument Serif"','ui-serif','Georgia','serif'], sans:['Geist','ui-sans-serif','system-ui','sans-serif'], mono:['"Geist Mono"','ui-monospace','Menlo','monospace'] },
+  borderRadius: { sm:'6px', md:'8px', lg:'16px' }, maxWidth: { content:'1140px' },
+  transitionTimingFunction: { smooth:'cubic-bezier(0.22,1,0.36,1)' },
+}}}
+</script>
+<style>
+:root{color-scheme:light}
+body{margin:0;background:#fff;color:#171717;font-family:Geist,ui-sans-serif,system-ui,sans-serif;letter-spacing:-0.025em;-webkit-font-smoothing:antialiased}
+.font-serif{letter-spacing:normal}
+:focus-visible{outline:2px solid #171717;outline-offset:2px;border-radius:6px}
+input:focus,select:focus{outline:none;box-shadow:none;border-color:#171717}
+[hidden]{display:none!important}
+.bar{transition:width .5s cubic-bezier(0.22,1,0.36,1)}
+.chip{border:1px solid #e5e5e5;border-radius:999px;padding:4px 12px;font-size:12px;color:#525252;background:#fff;cursor:pointer;transition:all .2s}
+.chip[aria-pressed="true"]{background:#171717;color:#fff;border-color:#171717}
+.osui-dot-grid{background-color:#fafafa;background-image:radial-gradient(#d4d4d4 1.1px,transparent 1.1px);background-size:22px 22px}
+tbody tr:hover{background:#fafafa}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="sticky top-0 z-50 border-b border-neutral-100 bg-white">
+  <div class="mx-auto flex max-w-content items-center gap-6 px-5 py-3">
+    <a href="/" class="flex items-center gap-2 font-serif text-[19px] text-neutral-900">
+      <span class="grid h-7 w-7 place-items-center rounded-sm bg-neutral-800 font-mono text-[11px] text-white">jn</span>
+      jeeneetrank<span class="text-neutral-400">.com</span>
+    </a>
+    <span class="font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-400">JoSAA predictor · free</span>
+    <a href="/#pricing" class="ml-auto rounded-sm border border-neutral-800 px-4 py-2 text-[14px] text-neutral-800 transition-colors duration-500 ease-smooth hover:bg-neutral-50">Season Pass</a>
+  </div>
+</header>
+
+<main class="mx-auto max-w-content px-5 py-10 md:py-14">
+  <div class="max-w-2xl">
+    <h1 class="font-serif text-[clamp(2rem,5vw,3.2rem)] leading-[1.08] text-neutral-900">Every seat you can get, <em class="text-neutral-500">with a real probability.</em></h1>
+    <p class="mt-4 text-[15px] leading-relaxed text-neutral-700">
+      Not a cutoff lookup. For each seat we simulate <span id="runs" class="font-mono text-[13px]">2,000</span> possible versions of this year's closing rank — from how JoSAA closing ranks actually moved between 2016 and <span id="season">2025</span> — and count how often your rank gets in. Ranks below are <b>final-round</b> closing ranks.
+    </p>
+  </div>
+
+  <div class="mt-10 grid gap-8 lg:grid-cols-[300px_1fr]">
+    <!-- ── inputs ── -->
+    <form id="f" class="space-y-5 self-start rounded-lg border border-neutral-200 p-5">
+      <div>
+        <label class="mb-1.5 block text-[13px] font-medium text-neutral-900" for="crl">JEE Main rank (CRL)</label>
+        <input id="crl" name="crl" type="number" min="1" inputmode="numeric" placeholder="e.g. 18500" required class="h-10 w-full rounded-md border border-neutral-200 px-3.5 font-mono text-[13px]">
+      </div>
+      <div>
+        <label class="mb-1.5 block text-[13px] font-medium text-neutral-900" for="cat">Category</label>
+        <select id="cat" name="cat" class="h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-[13px]">
+          <option>OPEN</option><option>EWS</option><option>OBC-NCL</option><option>SC</option><option>ST</option>
+        </select>
+      </div>
+      <div id="catRankWrap" hidden>
+        <label class="mb-1.5 block text-[13px] font-medium text-neutral-900" for="catrank">JEE Main <span id="catName">category</span> rank</label>
+        <input id="catrank" name="catrank" type="number" min="1" inputmode="numeric" placeholder="from your JEE Main scorecard" class="h-10 w-full rounded-md border border-neutral-200 px-3.5 font-mono text-[13px]">
+        <p class="mt-1.5 text-[12px] text-neutral-500">JoSAA judges category seats on the category rank, OPEN seats on the CRL. You get both.</p>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="mb-1.5 block text-[13px] font-medium text-neutral-900" for="gender">Gender</label>
+          <select id="gender" name="gender" class="h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-[13px]">
+            <option value="M">Male / other</option><option value="F">Female</option>
+          </select>
+        </div>
+        <div>
+          <label class="mb-1.5 block text-[13px] font-medium text-neutral-900" for="pwd">PwD</label>
+          <select id="pwd" name="pwd" class="h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-[13px]">
+            <option value="">No</option><option value="1">Yes</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="mb-1.5 block text-[13px] font-medium text-neutral-900" for="state">Home state <span class="font-normal text-neutral-500">(where you passed class XII)</span></label>
+        <select id="state" name="state" required class="h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-[13px]"></select>
+      </div>
+      <details class="rounded-md border border-neutral-100 bg-neutral-50 p-3">
+        <summary class="cursor-pointer text-[13px] font-medium text-neutral-900">JEE Advanced rank <span class="font-normal text-neutral-500">(for IITs)</span></summary>
+        <div class="mt-3 space-y-3">
+          <input id="advcrl" name="advcrl" type="number" min="1" inputmode="numeric" placeholder="Advanced CRL" class="h-10 w-full rounded-md border border-neutral-200 px-3.5 font-mono text-[13px]">
+          <input id="advcat" name="advcat" type="number" min="1" inputmode="numeric" placeholder="Advanced category rank" class="h-10 w-full rounded-md border border-neutral-200 px-3.5 font-mono text-[13px]" hidden>
+          <p class="text-[12px] text-neutral-500">IIT seats are allotted on JEE Advanced ranks. Leave blank to skip IITs.</p>
+        </div>
+      </details>
+      <button class="h-10 w-full rounded-sm bg-neutral-800 text-[14px] text-white transition-colors duration-500 ease-smooth hover:bg-neutral-900">Show my chances</button>
+      <p class="text-[12px] leading-relaxed text-neutral-500">Nothing you type leaves your browser.</p>
+    </form>
+
+    <!-- ── results ── -->
+    <section id="out" hidden>
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div class="flex flex-wrap gap-2" id="typeChips">
+          <button type="button" class="chip" data-type="IIT" aria-pressed="true">IIT</button>
+          <button type="button" class="chip" data-type="NIT" aria-pressed="true">NIT</button>
+          <button type="button" class="chip" data-type="IIIT" aria-pressed="true">IIIT</button>
+          <button type="button" class="chip" data-type="GFTI" aria-pressed="true">GFTI</button>
+        </div>
+        <input id="q" type="search" placeholder="Filter: computer, warangal, civil…" class="h-9 w-full rounded-md border border-neutral-200 px-3 text-[13px] md:w-72">
+      </div>
+
+      <div class="mt-4 grid gap-px overflow-hidden rounded-lg border border-neutral-200 bg-neutral-200 sm:grid-cols-3">
+        <div class="bg-white p-4"><p class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">Eligible seats</p><p id="nElig" class="mt-1 font-serif text-[28px] leading-none">—</p></div>
+        <div class="bg-white p-4"><p class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">Safe (≥ 70%)</p><p id="nSafe" class="mt-1 font-serif text-[28px] leading-none">—</p></div>
+        <div class="bg-white p-4"><p class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">Any seat in this view</p><p id="anySeat" class="mt-1 font-serif text-[28px] leading-none">—</p></div>
+      </div>
+
+      <div class="mt-4 overflow-x-auto rounded-lg border border-neutral-200">
+        <table class="w-full min-w-[640px] text-left">
+          <thead>
+            <tr class="border-b border-neutral-100 bg-neutral-50">
+              <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400">Seat</th>
+              <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400">Quota · seat</th>
+              <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400"><span id="seasonHdr">2025</span> closing</th>
+              <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400">Your chance</th>
+            </tr>
+          </thead>
+          <tbody id="rows" class="divide-y divide-neutral-100"></tbody>
+        </table>
+        <div class="flex items-center justify-between border-t border-neutral-100 px-4 py-3">
+          <p id="shown" class="font-mono text-[10px] text-neutral-400"></p>
+          <button id="more" type="button" class="text-[13px] text-neutral-700 underline-offset-2 hover:underline" hidden>Show more</button>
+        </div>
+      </div>
+
+      <p class="mt-4 text-[12px] leading-relaxed text-neutral-500">
+        <b class="text-neutral-700">How to read it.</b> "Your chance" is the share of simulated years in which this seat's final-round closing rank is at or beyond your rank. Trend arrows compare last two seasons. Calibration on 2025 (predicted from 2016–24): seats we called 70–80% got in 74% of the time; 90–100% → 94%. Verify everything on josaa.nic.in before you submit.
+      </p>
+    </section>
+
+    <section id="empty" class="osui-dot-grid grid place-items-center rounded-lg border border-dashed border-neutral-200 p-10 text-center">
+      <div>
+        <p class="font-serif text-[22px] text-neutral-900">Fill in the form to see your seats</p>
+        <p id="loading" class="mt-2 font-mono text-[11px] text-neutral-400">loading seat data…</p>
+      </div>
+    </section>
+  </div>
+</main>
+
+<footer class="mx-auto max-w-content px-5 py-10">
+  <p class="max-w-2xl text-[13px] leading-relaxed text-neutral-500">Advisory only. Data: JoSAA opening/closing ranks 2016–<span id="seasonFoot">2025</span>, final rounds. Not affiliated with NTA, JoSAA, MCC or any college.</p>
+</footer>
+
+<script src="predict.js"></script>
+<script>
+const STATES = ["Andaman and Nicobar Islands","Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chandigarh","Chhattisgarh","Dadra and Nagar Haveli","Daman and Diu","Delhi","Goa","Gujarat","Haryana","Himachal Pradesh","Jammu and Kashmir","Jharkhand","Karnataka","Kerala","Ladakh","Lakshadweep","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Puducherry","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal","Outside India"];
+const $ = id => document.getElementById(id);
+const fmt = n => n.toLocaleString("en-IN");
+$("state").innerHTML = '<option value="" disabled selected>Choose…</option>' + STATES.map(s => `<option>${s}</option>`).join("");
+$("runs").textContent = fmt(JNR.RUNS);
+
+let DATA = null, RESULT = null, page = 1;
+const PAGE = 60;
+const types = new Set(["IIT", "NIT", "IIIT", "GFTI"]);
+
+fetch("site-data/josaa.json").then(r => r.json()).then(d => {
+  DATA = d;
+  for (const id of ["season", "seasonHdr", "seasonFoot"]) $(id).textContent = d.season;
+  $("loading").textContent = `${fmt(d.seats.length)} seats · JoSAA ${d.season} final round`;
+  fromQuery();
+});
+
+function syncCategory() {
+  const cat = $("cat").value, isOpen = cat === "OPEN";
+  $("catRankWrap").hidden = isOpen;
+  $("advcat").hidden = isOpen;
+  $("catName").textContent = cat;
+  $("catrank").required = !isOpen;
+}
+$("cat").addEventListener("change", syncCategory);
+syncCategory();
+
+function candidate() {
+  const cat = $("cat").value;
+  const num = id => { const v = parseInt($(id).value, 10); return v > 0 ? v : null; };
+  const adv = num("advcrl") ? { crl: num("advcrl"), cat: cat === "OPEN" ? num("advcrl") : num("advcat") } : null;
+  return {
+    category: cat, pwd: !!$("pwd").value, gender: $("gender").value, state: $("state").value,
+    mainRank: { crl: num("crl"), cat: cat === "OPEN" ? num("crl") : num("catrank") },
+    advRank: adv,
+  };
+}
+
+$("f").addEventListener("submit", e => { e.preventDefault(); run(); history.replaceState(null, "", "?" + new URLSearchParams(new FormData($("f"))).toString()); });
+
+function fromQuery() {
+  const q = new URLSearchParams(location.search);
+  if (!q.get("crl")) return;
+  for (const [k, v] of q) if ($(k)) $(k).value = v;
+  syncCategory();
+  if ($("state").value) run();
+}
+
+function run() {
+  if (!DATA) return;
+  const c = candidate();
+  const elig = JNR.eligible(DATA, c);
+  const sim = JNR.simulate(DATA, elig);
+  RESULT = { c, elig, sim, order: [...elig.keys()].sort((a, b) => sim.p[b] - sim.p[a] || DATA.seats[elig[a].s][5] - DATA.seats[elig[b].s][5]) };
+  page = 1;
+  $("empty").hidden = true; $("out").hidden = false;
+  draw();
+}
+
+const tier = p => p >= 0.7 ? ["Safe", "border-emerald-200 bg-emerald-50 text-emerald-700", "bg-emerald-500"]
+             : p >= 0.3 ? ["Likely", "border-amber-200 bg-amber-50 text-amber-700", "bg-amber-500"]
+                        : ["Reach", "border-rose-200 bg-rose-50 text-rose-600", "bg-rose-400"];
+
+function visible() {
+  const q = $("q").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  return RESULT.order.filter(i => {
+    const seat = DATA.seats[RESULT.elig[i].s], inst = DATA.institutes[seat[0]];
+    if (!types.has(inst.type)) return false;
+    if (!q.length) return true;
+    const hay = (inst.short + " " + inst.name + " " + DATA.programs[seat[1]]).toLowerCase();
+    return q.every(w => hay.includes(w));
+  });
+}
+
+function draw() {
+  const { elig, sim } = RESULT;
+  const vis = visible();
+  const shown = vis.slice(0, page * PAGE);
+  $("nElig").textContent = fmt(vis.length);
+  $("nSafe").textContent = fmt(vis.filter(i => sim.p[i] >= 0.7).length);
+  $("anySeat").textContent = vis.length ? Math.round(100 * JNR.anyOf(sim, vis)) + "%" : "—";
+  $("rows").innerHTML = shown.map(i => {
+    const seat = DATA.seats[elig[i].s], inst = DATA.institutes[seat[0]];
+    const p = sim.p[i], pct = Math.round(p * 100), [t, cls, bar] = tier(p);
+    const closing = seat[5], prev = seat[7];
+    const trend = prev == null ? "" : closing > prev * 1.05 ? `<span class="text-emerald-600" title="closed later than ${fmt(prev)} last season">↑</span>`
+                : closing < prev * 0.95 ? `<span class="text-rose-500" title="closed earlier than ${fmt(prev)} last season">↓</span>` : `<span class="text-neutral-300">→</span>`;
+    const prog = DATA.programs[seat[1]].replace(/\s*\(.*?\)\s*$/, m => `<span class="text-neutral-400"> ${m.trim()}</span>`);
+    return `<tr>
+      <td class="px-4 py-3"><p class="text-[14px] font-semibold text-neutral-900">${inst.short}</p><p class="text-[13px] text-neutral-600">${prog}</p></td>
+      <td class="px-4 py-3 font-mono text-[11px] text-neutral-500">${DATA.quotas[seat[2]]} · ${DATA.categories[seat[3]]}${DATA.genders[seat[4]].startsWith("Female") ? " · F" : ""}</td>
+      <td class="px-4 py-3 font-mono text-[12px] text-neutral-700" style="font-variant-numeric:tabular-nums">${fmt(closing)} ${trend}<br><span class="text-[10px] text-neutral-400">your rank ${fmt(elig[i].rank)}</span></td>
+      <td class="px-4 py-3">
+        <div class="flex items-center gap-2"><span class="w-9 font-mono text-[12px] text-neutral-900" style="font-variant-numeric:tabular-nums">${pct}%</span><span class="rounded-full border ${cls} px-2 py-0.5 font-mono text-[9.5px]">${t}</span></div>
+        <div class="mt-2 h-1 w-full overflow-hidden rounded-full bg-neutral-100"><div class="bar h-full rounded-full ${bar}" style="width:${Math.max(2, pct)}%"></div></div>
+      </td></tr>`;
+  }).join("") || `<tr><td colspan="4" class="px-4 py-8 text-center text-[14px] text-neutral-500">No eligible seats match. Check the rank, the home state, and whether IITs need an Advanced rank.</td></tr>`;
+  $("shown").textContent = `showing ${fmt(shown.length)} of ${fmt(vis.length)} · sorted by chance`;
+  $("more").hidden = shown.length >= vis.length;
+}
+
+$("more").addEventListener("click", () => { page++; draw(); });
+$("q").addEventListener("input", () => { page = 1; if (RESULT) draw(); });
+document.querySelectorAll("#typeChips .chip").forEach(b => b.addEventListener("click", () => {
+  const on = b.getAttribute("aria-pressed") !== "true";
+  b.setAttribute("aria-pressed", on);
+  on ? types.add(b.dataset.type) : types.delete(b.dataset.type);
+  page = 1; if (RESULT) draw();
+}));
+</script>
+</body>
+</html>

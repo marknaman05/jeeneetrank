@@ -122,8 +122,8 @@ details[open] .chev{transform:rotate(180deg)}
       <p class="mt-6 text-[13px] text-neutral-500">We never sell your phone number to colleges.</p>
     </div>
 
-    <!-- Browser mockup: the predictor -->
-    <div id="predictor" class="mx-auto mt-14 max-w-3xl overflow-hidden rounded-lg border border-neutral-200 bg-white">
+    <!-- Browser mockup: the predictor's front door.  Submits to /predict. -->
+    <form id="predictor" action="predict.html" method="get" class="mx-auto mt-14 max-w-3xl overflow-hidden rounded-lg border border-neutral-200 bg-white">
       <div class="flex items-center gap-3 border-b border-neutral-200 bg-neutral-50 px-4 py-2.5">
         <div class="flex gap-1.5">
           <span class="h-3 w-3 rounded-full bg-[#ff5f57]"></span>
@@ -133,60 +133,28 @@ details[open] .chev{transform:rotate(180deg)}
         <p class="mx-auto rounded-sm border border-neutral-200 bg-white px-4 py-1 font-mono text-[10px] text-neutral-400">jeeneetrank.com/predict</p>
       </div>
 
-      <div class="grid md:grid-cols-[236px_1fr]">
-        <!-- controls -->
-        <div class="border-b border-neutral-100 p-4 md:border-b-0 md:border-r">
-          <div class="relative mb-4 flex rounded-md bg-neutral-100 p-1 font-mono text-[11px]">
-            <span id="segPill" class="absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-sm bg-white transition-transform duration-500 ease-smooth"></span>
-            <button data-exam="jee"  class="exam-btn relative z-10 flex-1 py-1.5 transition-colors">JEE</button>
-            <button data-exam="neet" class="exam-btn relative z-10 flex-1 py-1.5 transition-colors">NEET</button>
-          </div>
-
-          <label class="mb-3 block">
-            <span id="rankLabel" class="mb-1.5 block text-[13px] font-medium text-neutral-900">All-India rank</span>
-            <input id="rank" type="number" value="18500" min="1" step="100"
-              class="h-10 w-full rounded-md border border-neutral-200 bg-white px-3.5 font-mono text-[13px] text-neutral-900">
-          </label>
-          <label class="mb-4 block">
-            <span class="mb-1.5 block text-[13px] font-medium text-neutral-900">Category</span>
-            <select id="cat" class="h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-[13px] text-neutral-900">
-              <option value="1">General</option><option value="0.62">EWS</option>
-              <option value="0.45">OBC-NCL</option><option value="0.19">SC</option><option value="0.09">ST</option>
-            </select>
-          </label>
-
-          <div class="flex items-center gap-3 rounded-md border border-neutral-100 bg-neutral-50 p-3">
-            <svg viewBox="0 0 44 44" class="h-12 w-12 -rotate-90">
-              <circle cx="22" cy="22" r="18" fill="none" stroke="#e5e5e5" stroke-width="4"/>
-              <circle id="ring" cx="22" cy="22" r="18" fill="none" stroke="#171717" stroke-width="4"
-                      stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="30"
-                      style="transition:stroke-dashoffset .6s cubic-bezier(0.22,1,0.36,1)"/>
-            </svg>
-            <div>
-              <p class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">Any seat</p>
-              <p id="anySeat" class="font-serif text-[26px] leading-none text-neutral-900">—</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- results -->
-        <div class="overflow-x-auto">
-          <table class="w-full min-w-[420px] text-left">
-            <thead>
-              <tr class="border-b border-neutral-100 bg-neutral-50">
-                <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400">College</th>
-                <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400">Closing rank</th>
-                <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400">Chance</th>
-              </tr>
-            </thead>
-            <tbody id="results" class="divide-y divide-neutral-100"></tbody>
-          </table>
-          <p class="border-t border-neutral-100 px-4 py-3 font-mono text-[10px] leading-relaxed text-neutral-400">
-            Sample data — six seats from 2025 public closing ranks. The live product simulates the full seat matrix across every round.
-          </p>
-        </div>
+      <div class="grid gap-4 p-5 md:grid-cols-[1fr_1fr_1fr_auto] md:items-end">
+        <label class="block">
+          <span class="mb-1.5 block text-[13px] font-medium text-neutral-900">JEE Main rank (CRL)</span>
+          <input name="crl" type="number" min="1" required inputmode="numeric" placeholder="e.g. 18500"
+            class="h-10 w-full rounded-md border border-neutral-200 bg-white px-3.5 font-mono text-[13px] text-neutral-900">
+        </label>
+        <label class="block">
+          <span class="mb-1.5 block text-[13px] font-medium text-neutral-900">Category</span>
+          <select name="cat" class="h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-[13px] text-neutral-900">
+            <option>OPEN</option><option>EWS</option><option>OBC-NCL</option><option>SC</option><option>ST</option>
+          </select>
+        </label>
+        <label class="block">
+          <span class="mb-1.5 block text-[13px] font-medium text-neutral-900">Home state</span>
+          <select name="state" id="heroState" required class="h-10 w-full rounded-md border border-neutral-200 bg-white px-3 text-[13px] text-neutral-900"></select>
+        </label>
+        <button class="h-10 rounded-sm bg-neutral-800 px-5 text-[14px] text-white transition-colors duration-500 ease-smooth hover:bg-neutral-900">See my seats →</button>
       </div>
-    </div>
+      <p class="border-t border-neutral-100 px-5 py-3 font-mono text-[10px] leading-relaxed text-neutral-400">
+        <span id="seatCount">12,131</span> JoSAA seats · 2016–2025 closing ranks · 2,000 simulated seasons per seat · runs in your browser, nothing is uploaded. Category ranks and JEE Advanced go on the next page.
+      </p>
+    </form>
   </div>
 </section>
 

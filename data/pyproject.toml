@@ -1,0 +1,15 @@
+[project]
+name = "jeeneetrank-data"
+version = "0.1.0"
+description = "Data pipeline for jeeneetrank: scrape counselling opening/closing ranks, fit the drift model, export the predictor's JSON."
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.27",
+    "beautifulsoup4>=4.12",
+    "lxml>=5.0",
+    "pandas>=2.2",
+    "pyarrow>=16",
+]
+
+[tool.uv]
+package = false
