@@ -51,7 +51,7 @@ export default {
         headers: { "content-type": "application/json", "authorization": `Bearer ${env.DODO_API_KEY}` },
         body: JSON.stringify({
           product_cart: [{ product_id: env.DODO_PRODUCT_ID, quantity: 1 }],
-          customer: { email: b.email, name: b.name, phone_number: b.phone.replace(/[^+0-9]/g, "") },
+          customer: { email: b.email, name: b.name, phone_number: e164(b.phone) },
           billing_address: { country: "IN" },
           metadata: { booking_id: id, slot: b.slot },
           return_url: `${site}/book.html?booking=${id}`,
@@ -271,6 +271,17 @@ async function createCalendarEvent(env, rec) {
   });
   if (!r.ok) throw new Error("calendar " + r.status + " " + (await r.text()).slice(0, 200));
   return r.json();
+}
+
+/* "98765 43210", "098765-43210", "91 98765 43210", "+91…" -> "+919876543210".
+ * Anything that already starts with + is trusted as-is. */
+function e164(phone) {
+  let p = String(phone).replace(/[^+0-9]/g, "");
+  if (p.startsWith("+")) return p;
+  p = p.replace(/^0+/, "");
+  if (p.length === 10) return "+91" + p;
+  if (p.length === 12 && p.startsWith("91")) return "+" + p;
+  return "+" + p;
 }
 
 function dodoHost(env) { return env.DODO_ENV === "live" ? "https://live.dodopayments.com" : "https://test.dodopayments.com"; }
