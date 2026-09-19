@@ -24,7 +24,7 @@ input:focus,select:focus{outline:none;box-shadow:none;border-color:#171717}
 .osui-dot-grid{background-color:#fafafa;background-image:radial-gradient(#d4d4d4 1.1px,transparent 1.1px);background-size:22px 22px}
 tbody tr:hover{background:#fafafa}
 button.add[aria-pressed="true"]{background:#171717;color:#fff;border-color:#171717}
-.mv{height:24px;width:24px;border:1px solid #e5e5e5;border-radius:6px;font-size:12px;color:#525252;background:#fff}
+.mv{height:34px;width:34px;border:1px solid #e5e5e5;border-radius:8px;font-size:15px;color:#525252;background:#fff}
 .mv:hover:not(:disabled){border-color:#171717;color:#171717}
 .mv:disabled{opacity:.3}
 #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#171717;color:#fff;font-size:13px;padding:9px 14px;border-radius:999px;box-shadow:0 20px 25px -5px rgba(0,0,0,.2);z-index:60}
@@ -135,36 +135,36 @@ button.add[aria-pressed="true"]{background:#171717;color:#fff;border-color:#1717
 
       <!-- ── choice list ── -->
       <div id="listPanel" class="mt-4 overflow-hidden rounded-lg border border-neutral-900 bg-white">
-        <div class="bg-neutral-900 px-5 py-4 text-white">
+        <div class="bg-neutral-900 px-6 py-6 text-white">
           <div class="flex flex-wrap items-start justify-between gap-4">
             <div>
-              <p class="font-mono text-[10px] uppercase tracking-[0.14em] text-neutral-400">Choice list simulator</p>
-              <p class="mt-1 font-serif text-[24px] leading-none">My choice list <span id="listCount" class="font-sans text-[13px] text-neutral-400"></span></p>
-              <p class="mt-2 max-w-xl text-[13px] leading-relaxed text-neutral-300">Allotment goes to the <b class="text-white">first</b> choice that admits you, so list them in your true order. <span id="listLikely" class="text-cyan-200"></span></p>
+              <p class="font-mono text-[12px] uppercase tracking-[0.14em] text-neutral-400">Choice list simulator</p>
+              <p class="mt-1 font-serif text-[32px] leading-none">My choice list <span id="listCount" class="font-sans text-[15px] text-neutral-400"></span></p>
+              <p class="mt-3 max-w-xl text-[15px] leading-relaxed text-neutral-300">Allotment goes to the <b class="text-white">first</b> choice that admits you, so list them in your true order. <span id="listLikely" class="text-cyan-200"></span></p>
             </div>
             <div class="flex items-center gap-4">
-              <svg viewBox="0 0 44 44" class="h-14 w-14 -rotate-90">
+              <svg viewBox="0 0 44 44" class="h-20 w-20 -rotate-90">
                 <circle cx="22" cy="22" r="18" fill="none" stroke="#404040" stroke-width="4"/>
                 <circle id="listRing" cx="22" cy="22" r="18" fill="none" stroke="#a5f3fc" stroke-width="4" stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="113" style="transition:stroke-dashoffset .6s cubic-bezier(0.22,1,0.36,1)"/>
               </svg>
               <div>
-                <p class="font-mono text-[10px] uppercase tracking-[0.1em] text-neutral-400">Any seat from list</p>
-                <p id="listAny" class="font-serif text-[34px] leading-none">—</p>
+                <p class="font-mono text-[12px] uppercase tracking-[0.1em] text-neutral-400">Any seat from list</p>
+                <p id="listAny" class="font-serif text-[48px] leading-none">—</p>
               </div>
             </div>
           </div>
           <!-- where you land: one stacked bar, a segment per choice, grey for "no seat" -->
-          <div id="landBar" class="mt-4 flex h-2.5 w-full overflow-hidden rounded-full bg-neutral-700" hidden></div>
-          <div id="landKey" class="mt-2 flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] text-neutral-400" hidden></div>
+          <div id="landBar" class="mt-5 flex h-4 w-full overflow-hidden rounded-full bg-neutral-700" hidden></div>
+          <div id="landKey" class="mt-2.5 flex flex-wrap gap-x-5 gap-y-1.5 font-mono text-[12px] text-neutral-300" hidden></div>
         </div>
         <ol id="listRows" class="divide-y divide-neutral-100"></ol>
-        <p id="listEmpty" class="px-5 py-6 text-[13px] text-neutral-500">Add seats with <span class="rounded border border-neutral-300 px-1.5 font-mono text-[11px]">+</span> in the table below, in the order you'd fill them on JoSAA. You'll see where you're most likely to land, and whether the list needs more safety at the bottom.</p>
+        <p id="listEmpty" class="px-5 py-6 text-[15px] text-neutral-500">Add seats with <span class="rounded border border-neutral-300 px-1.5 font-mono text-[11px]">+</span> in the table below, in the order you'd fill them on JoSAA. You'll see where you're most likely to land, and whether the list needs more safety at the bottom.</p>
         <div id="listFoot" class="flex flex-wrap items-center justify-between gap-3 border-t border-neutral-100 bg-neutral-50 px-5 py-3" hidden>
-          <p class="font-mono text-[10px] leading-relaxed text-neutral-400">Saved in this browser · "at this position" = chance this is the seat you're allotted; earlier choices take priority. Reordering never changes the any-seat number, only where you land — to raise it, add safer seats at the bottom.</p>
+          <p class="font-mono text-[11px] leading-relaxed text-neutral-400">Saved in this browser · "at this position" = chance this is the seat you're allotted; earlier choices take priority. Reordering never changes the any-seat number, only where you land — to raise it, add safer seats at the bottom.</p>
           <div class="flex gap-4">
-            <button id="listShare" type="button" class="text-[12px] text-neutral-700 underline-offset-2 hover:underline">Copy link</button>
-            <button id="listCopy" type="button" class="text-[12px] text-neutral-700 underline-offset-2 hover:underline">Copy as text</button>
-            <button id="listClear" type="button" class="text-[12px] text-neutral-500 underline-offset-2 hover:underline">Clear</button>
+            <button id="listShare" type="button" class="text-[14px] text-neutral-700 underline-offset-2 hover:underline">Copy link</button>
+            <button id="listCopy" type="button" class="text-[14px] text-neutral-700 underline-offset-2 hover:underline">Copy as text</button>
+            <button id="listClear" type="button" class="text-[14px] text-neutral-500 underline-offset-2 hover:underline">Clear</button>
           </div>
         </div>
       </div>
@@ -402,7 +402,7 @@ function drawList() {
   // Outcome bar: every choice gets its slice; what's left is "no seat".
   $("landBar").innerHTML = perPos.map((p, k) => `<div style="width:${(p * 100).toFixed(2)}%;background:${colourAt(k)}" title="#${k + 1}: ${Math.round(p * 100)}%"></div>`).join("");
   const none = Math.max(0, 1 - any);
-  $("landKey").innerHTML = perPos.map((p, k) => `<span class="flex items-center gap-1.5"><i class="inline-block h-2 w-2 rounded-sm" style="background:${colourAt(k)}"></i>#${k + 1} ${Math.round(p * 100)}%</span>`).join("")
+  $("landKey").innerHTML = perPos.map((p, k) => `<span class="flex items-center gap-1.5"><i class="inline-block h-2.5 w-2.5 rounded-sm" style="background:${colourAt(k)}"></i>#${k + 1} ${Math.round(p * 100)}%</span>`).join("")
     + (none >= 0.005 ? `<span class="flex items-center gap-1.5"><i class="inline-block h-2 w-2 rounded-sm bg-neutral-600"></i>no seat ${Math.round(none * 100)}%</span>` : "");
 
   $("listRows").innerHTML = LIST.map((s, k) => {
@@ -413,20 +413,20 @@ function drawList() {
     const tierCls = own === null ? "border-rose-200 bg-rose-50 text-rose-600" : own >= 0.7 ? "border-emerald-200 bg-emerald-50 text-emerald-700" : own >= 0.3 ? "border-amber-200 bg-amber-50 text-amber-700" : "border-rose-200 bg-rose-50 text-rose-600";
     const tierTxt = own === null ? "not eligible" : own >= 0.7 ? "safe" : own >= 0.3 ? "likely" : "reach";
     const shadowed = own !== null && own >= 0.3 && p < 0.05 && k > 0;
-    return `<li class="group flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-neutral-50">
-      <span class="grid h-8 w-8 shrink-0 place-items-center rounded-md font-mono text-[12px]" style="background:${colourAt(k)};color:${k >= 3 ? "#fff" : "#171717"}">${k + 1}</span>
+    return `<li class="group flex items-center gap-5 px-6 py-5 transition-colors hover:bg-neutral-50">
+      <span class="grid h-11 w-11 shrink-0 place-items-center rounded-lg font-mono text-[16px]" style="background:${colourAt(k)};color:${k >= 3 ? "#fff" : "#171717"}">${k + 1}</span>
       <div class="min-w-0 flex-1">
-        <p class="truncate text-[14px] font-semibold text-neutral-900">${inst.short} <span class="font-normal text-neutral-500">· ${prog}</span></p>
-        <p class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[10px] text-neutral-400">
+        <p class="truncate text-[17px] font-semibold text-neutral-900">${inst.short} <span class="font-normal text-neutral-500">· ${prog}</span></p>
+        <p class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[12px] text-neutral-500">
           <span>${DATA.quotas[seat[2]]} · ${DATA.categories[seat[3]]}${DATA.genders[seat[4]].startsWith("Female") ? " · F" : ""}</span><span>closing ${fmt(seat[5])}</span>
-          <span class="rounded-full border ${tierCls} px-1.5 py-px text-[9px] uppercase tracking-[0.06em]">${tierTxt}${own === null ? "" : " · " + Math.round(own * 100) + "% alone"}</span>
+          <span class="rounded-full border ${tierCls} px-2 py-0.5 text-[11px] uppercase tracking-[0.06em]">${tierTxt}${own === null ? "" : " · " + Math.round(own * 100) + "% alone"}</span>
           ${shadowed ? `<span class="text-neutral-500">— a higher choice takes you first</span>` : ""}
         </p>
       </div>
-      <div class="w-28 shrink-0 text-right">
-        <p class="font-serif text-[22px] leading-none text-neutral-900" style="font-variant-numeric:tabular-nums">${pct}%</p>
-        <p class="font-mono text-[9px] uppercase tracking-[0.08em] text-neutral-400">you land here</p>
-        <div class="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-neutral-100"><div class="bar h-full rounded-full" style="width:${Math.max(2, pct)}%;background:${colourAt(k)}"></div></div>
+      <div class="w-36 shrink-0 text-right">
+        <p class="font-serif text-[34px] leading-none text-neutral-900" style="font-variant-numeric:tabular-nums">${pct}%</p>
+        <p class="font-mono text-[11px] uppercase tracking-[0.08em] text-neutral-400">you land here</p>
+        <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-neutral-100"><div class="bar h-full rounded-full" style="width:${Math.max(2, pct)}%;background:${colourAt(k)}"></div></div>
       </div>
       <div class="flex shrink-0 gap-1 opacity-60 transition-opacity group-hover:opacity-100">
         <button type="button" class="mv" data-move="${k}:-1" ${k === 0 ? "disabled" : ""} title="move up">↑</button>
