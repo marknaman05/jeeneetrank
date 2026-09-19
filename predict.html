@@ -193,10 +193,6 @@ button.add[aria-pressed="true"]{background:#171717;color:#fff;border-color:#1717
       </details>
 
       <div class="mt-4 overflow-x-auto rounded-lg border border-neutral-200">
-        <div class="flex flex-wrap items-center gap-3 border-b border-neutral-200 bg-neutral-50 px-4 py-3">
-          <p class="text-[14px] font-semibold text-neutral-900">All eligible seats</p>
-          <input id="q2" type="search" placeholder="Search: warangal cse, kerala ece, iit civil…" class="ml-auto h-10 w-full rounded-md border border-neutral-200 bg-white px-3.5 text-[14px] md:w-80">
-        </div>
         <table class="w-full min-w-[640px] text-left">
           <thead>
             <tr class="border-b border-neutral-100 bg-neutral-50">
@@ -205,6 +201,13 @@ button.add[aria-pressed="true"]{background:#171717;color:#fff;border-color:#1717
               <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400"><span id="seasonHdr">2025</span> closing</th>
               <th class="px-4 py-2.5 font-mono text-[10px] font-normal uppercase tracking-[0.1em] text-neutral-400">Your chance</th>
               <th class="px-2 py-2.5"></th>
+            </tr>
+            <tr class="border-b border-neutral-200 bg-white">
+              <th class="px-3 py-2 font-normal"><input data-col="seat" type="search" placeholder="Search college or branch…" class="colf h-9 w-full rounded-md border border-neutral-200 px-3 text-[13px] font-normal"></th>
+              <th class="px-3 py-2 font-normal"><input data-col="quota" type="search" placeholder="e.g. HS, OBC, F" class="colf h-9 w-full rounded-md border border-neutral-200 px-3 text-[13px] font-normal"></th>
+              <th class="px-3 py-2 font-normal"><input data-col="closing" type="number" min="1" placeholder="up to…" class="colf h-9 w-full rounded-md border border-neutral-200 px-3 font-mono text-[13px] font-normal"></th>
+              <th class="px-3 py-2 font-normal"><input data-col="chance" type="number" min="0" max="100" placeholder="min %" class="colf h-9 w-full rounded-md border border-neutral-200 px-3 font-mono text-[13px] font-normal"></th>
+              <th class="px-2 py-2"></th>
             </tr>
           </thead>
           <tbody id="rows" class="divide-y divide-neutral-100"></tbody>
@@ -337,16 +340,27 @@ const tier = p => p >= 0.7 ? ["Safe", "border-emerald-200 bg-emerald-50 text-eme
              : p >= 0.3 ? ["Likely", "border-amber-200 bg-amber-50 text-amber-700", "bg-amber-500"]
                         : ["Reach", "border-rose-200 bg-rose-50 text-rose-600", "bg-rose-400"];
 
+const words = v => v.trim().toLowerCase().split(/\s+/).filter(Boolean);
 function visible() {
-  const q = $("q").value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const q = words($("q").value);
+  const col = {};
+  document.querySelectorAll(".colf").forEach(el => { col[el.dataset.col] = el.value; });
+  const seatQ = words(col.seat || ""), quotaQ = words(col.quota || "");
+  const maxClosing = parseInt(col.closing, 10) || Infinity, minChance = (parseFloat(col.chance) || 0) / 100;
   return RESULT.order.filter(i => {
-    const seat = DATA.seats[RESULT.elig[i].s], inst = DATA.institutes[seat[0]];
-    if (!types.has(inst.type) || !tiers.has(tierOf(RESULT.sim.p[i])) || !branches.has(BRANCH_OF[seat[1]])) return false;
-    if (!q.length) return true;
+    const seat = DATA.seats[RESULT.elig[i].s], inst = DATA.institutes[seat[0]], p = RESULT.sim.p[i];
+    if (!types.has(inst.type) || !tiers.has(tierOf(p)) || !branches.has(BRANCH_OF[seat[1]])) return false;
+    if (seat[5] > maxClosing || p < minChance) return false;
     const hay = (inst.short + " " + inst.name + " " + inst.state + " " + inst.type + " " + DATA.programs[seat[1]] + " " + ABBR(DATA.programs[seat[1]])).toLowerCase();
-    return q.every(w => hay.includes(w));
+    if (!q.every(w => hay.includes(w)) || !seatQ.every(w => hay.includes(w))) return false;
+    if (quotaQ.length) {
+      const qs = (DATA.quotas[seat[2]] + " " + DATA.categories[seat[3]] + " " + (DATA.genders[seat[4]].startsWith("Female") ? "female f" : "neutral")).toLowerCase();
+      if (!quotaQ.every(w => qs.includes(w))) return false;
+    }
+    return true;
   });
 }
+document.querySelectorAll(".colf").forEach(el => el.addEventListener("input", () => { page = 1; if (RESULT) draw(); }));
 
 function draw() {
   const { elig, sim } = RESULT;
@@ -550,7 +564,7 @@ $("advRound").addEventListener("change", adviseRound);
 $("advSeat").addEventListener("change", adviseRound);
 
 $("more").addEventListener("click", () => { page++; draw(); });
-for (const [a, b] of [["q", "q2"], ["q2", "q"]]) $(a).addEventListener("input", () => { $(b).value = $(a).value; page = 1; if (RESULT) draw(); });
+$("q").addEventListener("input", () => { page = 1; if (RESULT) draw(); });
 document.querySelectorAll("#filters .chip").forEach(b => b.addEventListener("click", () => {
   const on = b.getAttribute("aria-pressed") !== "true";
   b.setAttribute("aria-pressed", on);
