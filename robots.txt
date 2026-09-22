@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /site-data/
+Sitemap: https://jeeneetrank.com/sitemap.xml
